@@ -98,6 +98,27 @@ Disable-comment only after all four fail; say which in the comment.
 :::
 
 :::warning
+The other half of that: every error a call can produce in practice belongs in its **type-level**
+error union, as a tagged error. Catch-all and `unknown`-shaped errors exist to SURFACE a gap, never
+to be handled — catching one buries the missing case instead of naming it.
+
+**When `Effect.catchTag('X', …)` refuses to typecheck, that is the signal**, not an obstacle. The
+union is missing the error. Widen it where it is produced — the schema, the service signature, the
+wrapper that swallowed it — and never loosen the catch to meet the code:
+
+- structural probing — `Predicate.hasProperty(error, '_tag')`, `'code' in error`
+- widening casts — `(error as { _tag?: string })._tag`
+- catching a catch-all, then re-narrowing it by `status`/`code`/`message`
+
+Only the second is machine-checked (it ends in a `_tag` read, so `local/no-tag-access` rejects it —
+measured). The other two read as ordinary code; they are on you.
+
+`Effect.retry`'s `while` takes a plain predicate, with no tag-based variant, so the tag-free form is
+`Match.value(error).pipe(Match.tag('X', () => true), Match.orElse(() => false))`. Verbose, and still
+not a licence to read `_tag`.
+:::
+
+:::warning
 Error schema fields must not shadow `Error`'s own. Fields are assigned onto the instance, so a `name`
 or `stack` field replaces what identifies the error as an error — `Cause.pretty`, `String(error)`,
 the stack header, OTLP `exception.type`/`exception.stacktrace` all read it (measured). Name for what
@@ -196,6 +217,39 @@ Do not guess about Effect, oxc or Bun. Do not trust a plausible claim in a revie
 `lint/fixtures/` is deliberately malformed — it is the rule tests' input. It is excluded from both
 oxlint and oxfmt. Formatting it would repair the violations and turn those tests green against
 nothing.
+:::
+
+## Pull requests
+
+Conventional-commit format for the PR title AND every commit subject: `fix(lint): …`,
+`feat(tsconfig): …`, `docs: …`.
+
+The description documents the change, nothing else:
+
+- The summary is plain prose at the very top — no heading above it, no `### Summary`. The PR title
+  is already rendered; do not restate it.
+- Smallest heading allowed is `###`, and only when the description genuinely splits into sections.
+  Never `#` or `##`.
+- Prefer a code snippet to a paragraph. A ` ```ts ` or ` ```diff ` block showing the new shape beats
+  prose describing it; add prose only for the "why" a snippet cannot carry.
+- Cut anything that restates the diff, and anything that reads like marketing.
+- **Never** a "Test plan", "Testing", or TODO checklist. Skip examples entirely for trivial fixes,
+  internal refactors and doc-only changes.
+
+Outstanding work, manual verification or review items do NOT go in the description or a comment.
+Mark the PR **draft** and say what is outstanding in the chat that asked for it.
+
+:::warning
+Write the body to a file and pass `--body-file`; never inline it:
+
+```sh
+gh pr create --body-file tmp/pr-body.md   # write it with Write, not a heredoc
+```
+
+`--body "$(cat <<'EOF' … EOF)"` mangles backticks and backslashes in some shell/`gh` combinations —
+inline code spans arrive as literal `` \` ``. `--body-file` sidesteps shell quoting entirely. If
+`gh pr edit --body-file` silently no-ops on an older `gh`, fall back to
+`gh api -X PATCH repos/<owner>/<repo>/pulls/<n> -F body=@tmp/pr-body.md`.
 :::
 
 ## Changing this file
