@@ -87,40 +87,29 @@ function rankOf(node: ESTree.Node): Option.Option<number> {
   return Option.fromNullishOr(STATIC_RANKS[node.type])
 }
 
-/**
- * `highestRankSeen` is the running maximum: a violating node ranks below it by
- * definition, so it never moves the maximum and needs no special case.
- */
 function outOfOrderDiagnostics(program: ESTree.Node): readonly Diagnostic.Diagnostic[] {
   if (program.type !== 'Program') {
     return []
   }
 
-  const diagnostics: Diagnostic.Diagnostic[] = []
-  let highestRankSeen = -1
-
   const ranked = Arr.getSomes(
     program.body.map((statement) => Option.map(rankOf(statement), (rank) => ({ statement, rank }))),
   )
 
-  for (const { statement, rank } of ranked) {
-    if (rank < highestRankSeen) {
-      diagnostics.push(
-        Diagnostic.fromId({
-          node: statement,
-          messageId: 'outOfOrder',
-          data: {
-            section: SECTION_NAMES[rank],
-            after: SECTION_NAMES[highestRankSeen],
-          },
-        }),
-      )
-    } else {
-      highestRankSeen = rank
-    }
-  }
+  // The running maximum, which `scan` seeds with its initial value — so entry i
+  // is the highest rank seen BEFORE statement i. A violating statement ranks
+  // below that maximum by definition, so it never moves it and needs no case.
+  const highestBefore = Arr.scan(ranked, -1, (highest, { rank }) => Math.max(highest, rank))
 
-  return diagnostics
+  return Arr.zip(ranked, highestBefore)
+    .filter(([{ rank }, highestSeen]) => rank < highestSeen)
+    .map(([{ statement, rank }, highestSeen]) =>
+      Diagnostic.fromId({
+        node: statement,
+        messageId: 'outOfOrder',
+        data: { section: SECTION_NAMES[rank], after: SECTION_NAMES[highestSeen] },
+      }),
+    )
 }
 
 export default Rule.define({

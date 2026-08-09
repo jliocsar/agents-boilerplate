@@ -12,6 +12,7 @@
 
 import * as Arr from 'effect/Array'
 import * as Effect from 'effect/Effect'
+import { pipe } from 'effect/Function'
 import * as Option from 'effect/Option'
 import { Diagnostic, type ESTree, type OxlintSourceCode, Rule, RuleContext } from 'effect-oxlint'
 import {
@@ -48,10 +49,52 @@ function isExpectStatement(statement: ESTree.Node): boolean {
   return root.type === 'Identifier' && root.name === 'expect'
 }
 
-/**
- * The one gap between two adjacent statements, or none when the vertical-spacing
- * rules own it (neither side is an assertion) and when it already reads right.
- */
+/** Inside the block: consecutive assertions, so close any gap between them. */
+function denseGap(
+  sourceCode: OxlintSourceCode,
+  previous: ESTree.Node,
+  current: ESTree.Node,
+): Option.Option<Diagnostic.Diagnostic> {
+  const comments = sourceCode.getCommentsBefore(current)
+  // A note on its own line is content, not spacing.
+  const introduced = comments.some((comment) => comment.loc.start.line > previous.loc.end.line)
+
+  return pipe(
+    current,
+    Option.liftPredicate(() => !introduced && blankLinesBetween(previous, current) > 0),
+    Option.map(() =>
+      Diagnostic.withFix(
+        Diagnostic.fromId({ node: current, messageId: 'denseExpectBlock' }),
+        // Replace the whole gap so several blank lines collapse at once,
+        // starting after any trailing comment on the previous line.
+        (fixer) =>
+          fixer.replaceTextRange(
+            [comments.at(-1)?.range[1] ?? previous.range[1], current.range[0]],
+            `\n${' '.repeat(current.loc.start.column)}`,
+          ),
+      ),
+    ),
+  )
+}
+
+/** The block's edge: exactly one side is an assertion, so fence it off. */
+function fenceGap(
+  previous: ESTree.Node,
+  current: ESTree.Node,
+): Option.Option<Diagnostic.Diagnostic> {
+  return pipe(
+    current,
+    Option.liftPredicate(() => blankLinesBetween(previous, current) === 0),
+    Option.map(() =>
+      Diagnostic.withFix(
+        Diagnostic.fromId({ node: current, messageId: 'fenceExpectBlock' }),
+        (fixer) => fixer.insertTextBeforeRange(lineStartRange(current), '\n'),
+      ),
+    ),
+  )
+}
+
+/** None where neither side is an assertion — the vertical-spacing rules own it. */
 function gapDiagnostic(
   sourceCode: OxlintSourceCode,
   previous: ESTree.Node,
@@ -60,51 +103,11 @@ function gapDiagnostic(
   const previousIsExpect = isExpectStatement(previous)
   const currentIsExpect = isExpectStatement(current)
 
-  if (!previousIsExpect && !currentIsExpect) {
-    return Option.none()
-  }
-
-  const blankLines = blankLinesBetween(previous, current)
-
   if (previousIsExpect && currentIsExpect) {
-    const comments = sourceCode.getCommentsBefore(current)
-
-    // A note on its own line is content, not spacing.
-    if (comments.some((comment) => comment.loc.start.line > previous.loc.end.line)) {
-      return Option.none()
-    }
-
-    if (blankLines === 0) {
-      return Option.none()
-    }
-
-    // Replace the whole gap so several blank lines collapse at once, starting
-    // after any trailing comment on the previous line.
-    const gapStart = comments.at(-1)?.range[1] ?? previous.range[1]
-
-    return Option.some(
-      Diagnostic.withFix(
-        Diagnostic.fromId({ node: current, messageId: 'denseExpectBlock' }),
-        (fixer) =>
-          fixer.replaceTextRange(
-            [gapStart, current.range[0]],
-            `\n${' '.repeat(current.loc.start.column)}`,
-          ),
-      ),
-    )
+    return denseGap(sourceCode, previous, current)
   }
 
-  // Exactly one side is an assertion, so this gap is the block's edge.
-  if (blankLines > 0) {
-    return Option.none()
-  }
-
-  return Option.some(
-    Diagnostic.withFix(
-      Diagnostic.fromId({ node: current, messageId: 'fenceExpectBlock' }),
-      (fixer) => fixer.insertTextBeforeRange(lineStartRange(current), '\n'),
-    ),
-  )
+  return previousIsExpect || currentIsExpect ? fenceGap(previous, current) : Option.none()
 }
 
 export default Rule.define({

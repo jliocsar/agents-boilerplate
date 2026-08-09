@@ -105,6 +105,27 @@ it holds (`userName`), not where it sits. `message`/`cause` stay legal.
 Enforced: `local/no-shadowed-error-field`.
 :::
 
+:::warning
+Railway oriented programming, everywhere — the lint rules and any tooling too, not just Effect code.
+A computation is a chain of `Option`/`Result`/`Effect` combinators that short-circuits, not a ladder
+of guards feeding a `let`. `Option.liftPredicate` to get onto the track, `filter`/`map`/`flatMap`
+along it, `getOrElse`/`match` to get off. A running accumulator is `Arr.scan`, not a mutable one.
+
+Type narrowing is NOT the failure track. `if (node.type !== 'CallExpression') { return Option.none() }`
+at the head of a function is a guard, and routing it through combinators makes it worse. The rule is
+about the value flow; it does not ban `if`.
+**Not enforced**: no rule can tell a guard from a fold. Review catches this one.
+:::
+
+:::warning
+Locality of behaviour: what belongs to a thing lives beside it. A schema's derived type is declared
+next to the schema and shares its name — `const Spec = Schema.Struct({…})` then
+`type Spec = typeof Spec.Type` — never gathered into a types module.
+
+This is why `statement-order` leaves a type alias containing `typeof` unranked: type-defs otherwise
+sort above constants, which would force every schema type away from its schema.
+:::
+
 - Errors are `Schema.TaggedErrorClass` with a `message` getter: full sentence, names the fix where
   possible. One reporter prints `error.message`; an error without one exits silently.
 - Module-level primitive constants are `SCREAMING_SNAKE_CASE` — they are the knobs and magic values,

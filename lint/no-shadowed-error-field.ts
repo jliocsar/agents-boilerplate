@@ -52,20 +52,18 @@ function calleeName(node: ESTree.Expression): Option.Option<string> {
  * Both arguments are read positionally: the tag, then the fields.
  */
 function fieldsObject(node: ESTree.CallExpression): Option.Option<ESTree.ObjectExpression> {
-  if (node.callee.type !== 'CallExpression') {
+  const curried = node.callee
+
+  if (curried.type !== 'CallExpression') {
     return Option.none()
   }
 
-  const isErrorClass = calleeName(node.callee.callee).pipe(
-    Option.map((name) => ERROR_CLASS_FACTORIES.has(name)),
-    Option.getOrElse(() => false),
+  return calleeName(curried.callee).pipe(
+    Option.filter((name) => ERROR_CLASS_FACTORIES.has(name)),
+    Option.flatMap(() =>
+      Arr.findFirst(node.arguments, (argument) => argument.type === 'ObjectExpression'),
+    ),
   )
-
-  if (!isErrorClass) {
-    return Option.none()
-  }
-
-  return Arr.findFirst(node.arguments, (argument) => argument.type === 'ObjectExpression')
 }
 
 function shadowedOnly(name: string): Option.Option<string> {
@@ -97,12 +95,14 @@ function shadowedFields(node: ESTree.Node): readonly Diagnostic.Diagnostic[] {
     Option.map((fields) =>
       Arr.getSomes(
         fields.properties.map((property) =>
-          Option.map(shadowedFieldName(property), (field) =>
-            Diagnostic.fromId({
-              node: property,
-              messageId: 'shadowedErrorField',
-              data: { field },
-            }),
+          shadowedFieldName(property).pipe(
+            Option.map((field) =>
+              Diagnostic.fromId({
+                node: property,
+                messageId: 'shadowedErrorField',
+                data: { field },
+              }),
+            ),
           ),
         ),
       ),

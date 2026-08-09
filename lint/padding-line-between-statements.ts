@@ -15,18 +15,24 @@
 
 import * as Arr from 'effect/Array'
 import * as Effect from 'effect/Effect'
+import { pipe } from 'effect/Function'
 import * as Match from 'effect/Match'
 import * as Option from 'effect/Option'
 import * as Schema from 'effect/Schema'
-import { Diagnostic, type ESTree, type OxlintSourceCode, Rule, RuleContext } from 'effect-oxlint'
+import {
+  Diagnostic,
+  type ESTree,
+  type OxlintSourceCode,
+  Rule,
+  RuleContext,
+  type Span,
+} from 'effect-oxlint'
 import {
   adjacentPairs,
   blankLinesBetween,
   lineStartRange,
   statementsOf,
 } from './source-position.ts'
-
-type StatementType = (typeof STATEMENT_TYPES)[number]
 
 /** The statement types this port understands. Anything else fails to decode. */
 const STATEMENT_TYPES = [
@@ -41,6 +47,7 @@ const STATEMENT_TYPES = [
 ] as const
 
 const StatementType = Schema.Literals(STATEMENT_TYPES)
+type StatementType = typeof StatementType.Type
 
 /** `prev`/`next` accept a single type or a list; a list matches on any member. */
 const Spec = Schema.Struct({
@@ -50,6 +57,7 @@ const Spec = Schema.Struct({
 })
 
 const Specs = Schema.Array(Spec)
+type Specs = typeof Specs.Type
 
 /**
  * Statements that own a block outright, as opposed to one reached through an
@@ -135,11 +143,7 @@ function matchesType(node: ESTree.Node, type: StatementType): boolean {
  * Last matching entry wins, which is what lets the broad `always` rules lead and
  * the `any` exceptions trail.
  */
-function requiresBlankLine(
-  specs: typeof Specs.Type,
-  previous: ESTree.Node,
-  current: ESTree.Node,
-): boolean {
+function requiresBlankLine(specs: Specs, previous: ESTree.Node, current: ESTree.Node): boolean {
   const matches = (node: ESTree.Node, types: readonly StatementType[]) =>
     types.some((type) => matchesType(node, type))
 
@@ -152,32 +156,38 @@ function requiresBlankLine(
   )
 }
 
-function missingBlankLine(
+/**
+ * Where the blank line goes. A comment above `current` introduces it, so the
+ * fence belongs above the comment — and the gap is measured to the comment,
+ * since a comment line is not a blank line.
+ */
+function fenceAnchor(
   sourceCode: OxlintSourceCode,
-  specs: typeof Specs.Type,
   previous: ESTree.Node,
   current: ESTree.Node,
-): Option.Option<Diagnostic.Diagnostic> {
-  if (!requiresBlankLine(specs, previous, current)) {
-    return Option.none()
-  }
-
-  // A comment above `current` introduces it, so the fence goes above the
-  // comment — and the gap is measured to the comment, since a comment line is
-  // not a blank line.
+): Span {
   const introducing = sourceCode
     .getCommentsBefore(current)
     .filter((comment) => comment.loc.start.line > previous.loc.end.line)
-  const anchor = introducing[0] ?? current
 
-  if (blankLinesBetween(previous, anchor) > 0) {
-    return Option.none()
-  }
+  return introducing[0] ?? current
+}
 
-  return Option.some(
-    Diagnostic.withFix(
-      Diagnostic.fromId({ node: current, messageId: 'expectedBlankLine' }),
-      (fixer) => fixer.insertTextBeforeRange(lineStartRange(anchor), '\n'),
+function missingBlankLine(
+  sourceCode: OxlintSourceCode,
+  specs: Specs,
+  previous: ESTree.Node,
+  current: ESTree.Node,
+): Option.Option<Diagnostic.Diagnostic> {
+  return pipe(
+    fenceAnchor(sourceCode, previous, current),
+    Option.liftPredicate(() => requiresBlankLine(specs, previous, current)),
+    Option.filter((anchor) => blankLinesBetween(previous, anchor) === 0),
+    Option.map((anchor) =>
+      Diagnostic.withFix(
+        Diagnostic.fromId({ node: current, messageId: 'expectedBlankLine' }),
+        (fixer) => fixer.insertTextBeforeRange(lineStartRange(anchor), '\n'),
+      ),
     ),
   )
 }
