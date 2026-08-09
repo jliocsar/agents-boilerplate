@@ -1,0 +1,129 @@
+{
+  "$schema": "./node_modules/@effect/tsgo/oxlint-schema.json",
+
+  // The Effect rules. The preset also sets `options.typeAware`, which they all
+  // require. Extends are applied in order and rules below take precedence.
+  "extends": ["./node_modules/@effect/tsgo/oxlint-presets/recommended.json"],
+
+  // Listing plugins explicitly is what turns off oxlint's unicorn/oxc defaults.
+  "plugins": ["typescript", "promise", "effecttsgo"],
+
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error",
+    "pedantic": "error"
+  },
+
+  "ignorePatterns": [
+    "**/dist/**",
+    "**/*.d.ts",
+    ".claude/**",
+    ".agents/**",
+    ".husky/**",
+    // Deliberate violations: the lint tests' input.
+    "lint/fixtures/**"
+  ],
+
+  // Loaded by Bun, not Node: `Plugin.define` and the rules are TypeScript.
+  "jsPlugins": ["./lint/plugin.ts"],
+
+  "rules": {
+    "local/statement-order": "error",
+    "local/no-tag-access": "error",
+    "local/no-shadowed-error-field": "error",
+
+    // ONE array argument, not variadic entries: `Rule.define` decodes options[0].
+    // Broad "always" rules first; "any" exceptions last — last match wins.
+    "local/padding-line-between-statements": [
+      "error",
+      [
+        { "blankLine": "always", "prev": "*", "next": "return" },
+        { "blankLine": "always", "prev": "*", "next": "block-like" },
+        { "blankLine": "always", "prev": "block-like", "next": "*" },
+        { "blankLine": "always", "prev": "*", "next": ["function", "class"] },
+        { "blankLine": "always", "prev": ["function", "class"], "next": "*" },
+        { "blankLine": "always", "prev": "import", "next": "*" },
+        { "blankLine": "any", "prev": "import", "next": "import" },
+        {
+          "blankLine": "any",
+          "prev": ["singleline-const", "singleline-let"],
+          "next": ["singleline-const", "singleline-let"]
+        }
+      ]
+    ],
+
+    // Leaf imports only. A barrel is the bare root, `effect/testing`, or a single
+    // lowercase segment under `unstable/` — every leaf module is PascalCase.
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          {
+            "regex": "^effect$|^effect/testing$|^effect/unstable/[a-z0-9-]+$",
+            "allowTypeImports": true,
+            "message": "Import the leaf module, not the barrel: `effect/Effect`, `effect/unstable/schema/Schema`."
+          }
+        ]
+      }
+    ],
+
+    "promise/prefer-await-to-then": "error",
+
+    "id-length": ["error", { "min": 2, "exceptions": ["i", "j"], "properties": "never" }],
+
+    "curly": ["error", "all"],
+    "no-else-return": ["error", { "allowElseIf": false }],
+    "no-nested-ternary": "error",
+    "prefer-template": "error",
+    "complexity": ["error", 15],
+    // 200 because Effect.fn bodies are a linear chain of `yield*` steps; each step
+    // is already its own composable Effect, so "extract a helper" doesn't apply.
+    "max-lines-per-function": [
+      "error",
+      { "max": 200, "skipBlankLines": true, "skipComments": true, "IIFEs": true }
+    ],
+    // Effect.fn wraps a generator that may have zero `yield*`.
+    "require-yield": "off",
+    "no-empty": ["error", { "allowEmptyCatch": true }],
+
+    // Demands `readonly` on every object parameter; never in strictTypeChecked.
+    "typescript/prefer-readonly-parameter-types": "off",
+    "typescript/array-type": ["error", { "default": "array", "readonly": "array" }],
+    "no-unused-vars": [
+      "error",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "caughtErrorsIgnorePattern": "^_"
+      }
+    ],
+    "typescript/consistent-type-imports": [
+      "error",
+      { "prefer": "type-imports", "fixStyle": "separate-type-imports" }
+    ],
+    "typescript/restrict-template-expressions": [
+      "error",
+      { "allowNumber": true, "allowBoolean": true }
+    ]
+  },
+
+  "overrides": [
+    {
+      // The rule tests shell out to oxlint; `Bun.$` is a promise, not an Effect.
+      "files": ["lint/*.test.ts"],
+      "rules": {
+        "effecttsgo/async-function": "off"
+      }
+    },
+    {
+      "files": ["**/*.test.ts", "**/test/**/*.ts"],
+      "rules": {
+        "local/expect-padding": "error",
+        "max-lines-per-function": "off",
+        "typescript/no-non-null-assertion": "off",
+        "typescript/no-confusing-void-expression": "off",
+        "typescript/no-unnecessary-type-conversion": "off"
+      }
+    }
+  ]
+}
