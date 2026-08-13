@@ -7,8 +7,8 @@
     "packages/*"
   ],
   "scripts": {
-    "test": "bun test ./lint && bun run --filter '*' --if-present test",
-    "typecheck": "tsc -p tsconfig.json && bun run --filter '*' --if-present typecheck",
+    "test": "bun run --filter '*' --if-present test",
+    "typecheck": "bun run --filter '*' --if-present typecheck",
     "build": "bun run --filter '*' --if-present build",
     "lint": "bunx --bun oxlint --deny-warnings",
     "lint:fix": "bunx --bun oxlint --fix --deny-warnings",

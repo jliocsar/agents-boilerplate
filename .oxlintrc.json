@@ -3,7 +3,10 @@
 
   // The Effect rules. The preset also sets `options.typeAware`, which they all
   // require. Extends are applied in order and rules below take precedence.
-  "extends": ["./node_modules/@effect/tsgo/oxlint-presets/recommended.json"],
+  "extends": [
+    "./node_modules/@effect/tsgo/oxlint-presets/recommended.json",
+    "./packages/begone-slop/preset.json"
+  ],
 
   // Listing plugins explicitly is what turns off oxlint's unicorn/oxc defaults.
   "plugins": ["typescript", "promise", "effecttsgo"],
@@ -20,38 +23,15 @@
     ".claude/**",
     ".agents/**",
     ".husky/**",
-    // Deliberate violations: the lint tests' input.
-    "lint/fixtures/**"
+    // Deliberate violations: the rule tests' input.
+    "packages/begone-slop/test/fixtures/**"
   ],
 
   // Loaded by Bun, not Node: `Plugin.define` and the rules are TypeScript.
-  "jsPlugins": ["./lint/plugin.ts"],
+  // The severities live in the package's own `preset.json`, extended above.
+  "jsPlugins": ["./packages/begone-slop/src/index.ts"],
 
   "rules": {
-    "local/statement-order": "error",
-    "local/no-tag-access": "error",
-    "local/no-shadowed-error-field": "error",
-
-    // ONE array argument, not variadic entries: `Rule.define` decodes options[0].
-    // Broad "always" rules first; "any" exceptions last — last match wins.
-    "local/padding-line-between-statements": [
-      "error",
-      [
-        { "blankLine": "always", "prev": "*", "next": "return" },
-        { "blankLine": "always", "prev": "*", "next": "block-like" },
-        { "blankLine": "always", "prev": "block-like", "next": "*" },
-        { "blankLine": "always", "prev": "*", "next": ["function", "class"] },
-        { "blankLine": "always", "prev": ["function", "class"], "next": "*" },
-        { "blankLine": "always", "prev": "import", "next": "*" },
-        { "blankLine": "any", "prev": "import", "next": "import" },
-        {
-          "blankLine": "any",
-          "prev": ["singleline-const", "singleline-let"],
-          "next": ["singleline-const", "singleline-let"]
-        }
-      ]
-    ],
-
     // Leaf imports only. A barrel is the bare root, `effect/testing`, or a single
     // lowercase segment under `unstable/` — every leaf module is PascalCase.
     "no-restricted-imports": [
@@ -110,7 +90,7 @@
   "overrides": [
     {
       // The rule tests shell out to oxlint; `Bun.$` is a promise, not an Effect.
-      "files": ["lint/*.test.ts"],
+      "files": ["packages/begone-slop/test/*.test.ts"],
       "rules": {
         "effecttsgo/async-function": "off"
       }
@@ -118,7 +98,7 @@
     {
       "files": ["**/*.test.ts", "**/test/**/*.ts"],
       "rules": {
-        "local/expect-padding": "error",
+        "begone-slop/expect-padding": "error",
         "max-lines-per-function": "off",
         "typescript/no-non-null-assertion": "off",
         "typescript/no-confusing-void-expression": "off",
