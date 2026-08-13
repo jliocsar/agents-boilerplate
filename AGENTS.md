@@ -8,7 +8,7 @@ Toolchain is oxc + TypeScript 7: `oxlint` (lint), `oxfmt` (format), `typescript@
 
 :::warning
 Lint runs as `bunx --bun oxlint`, never bare `oxlint`. The local rules are TypeScript
-(`lint/plugin.ts`, built on `effect-oxlint`), and oxlint imports its JS plugins with whatever
+(`packages/begone-slop`, built on `effect-oxlint`), and oxlint imports its JS plugins with whatever
 runtime is executing it. `node_modules/.bin/oxlint` is `#!/usr/bin/env node`, which dies on a `.ts`
 plugin with `ERR_UNKNOWN_FILE_EXTENSION` (measured). `--bun` is what makes it Bun's import.
 
@@ -64,8 +64,8 @@ breaks, and the spacing rules judge the result.
   across members. Not lintable in a flat layout (a sibling climb spells `../../other`, naming no
   directory), so it is on you. If the import you want is not exported, export it.
 - `packages/tsconfig` has no `scripts` at all: it ships a tsconfig and nothing runnable.
-- Root `tsconfig.json` covers `lint/` — the repo's own tooling belongs to no member, and without it
-  the type-aware pass sees `Bun` as unresolved.
+- `packages/begone-slop` is the lint plugin: every local rule, its preset, and its tests. It is a
+  member like any other, so it owns its `tsconfig.json` and there is no root one.
 
 :::warning
 Every member with source needs a `test` script. The gate runs
@@ -88,7 +88,7 @@ under `unstable/`, since every leaf module is PascalCase. Type-only imports are 
 Never read `_tag`. The `_` prefix means private. Use `Match.tag`/`Match.tags`/`Match.tagsExhaustive`,
 a library guard (`Cause.isTimeoutError`, `Exit.isFailure`, `Result.isFailure`), or `instanceof` where
 the module instance is shared. Prefer exhaustive so a new variant fails to compile.
-Enforced: `local/no-tag-access`.
+Enforced: `begone-slop/no-tag-access`.
 
 Nested `reason` unions too — `SqlError`/`AiError` put the variant in `reason`, out of the failure
 channel, so `catchTag` misses it and some `effect-best-practices` snippets write `error.reason._tag`.
@@ -110,8 +110,8 @@ wrapper that swallowed it — and never loosen the catch to meet the code:
 - widening casts — `(error as { _tag?: string })._tag`
 - catching a catch-all, then re-narrowing it by `status`/`code`/`message`
 
-Only the second is machine-checked (it ends in a `_tag` read, so `local/no-tag-access` rejects it —
-measured). The other two read as ordinary code; they are on you.
+Only the second is machine-checked (it ends in a `_tag` read, so `begone-slop/no-tag-access`
+rejects it — measured). The other two read as ordinary code; they are on you.
 
 `Effect.retry`'s `while` takes a plain predicate, with no tag-based variant, so the tag-free form is
 `Match.value(error).pipe(Match.tag('X', () => true), Match.orElse(() => false))`. Verbose, and still
@@ -123,7 +123,7 @@ Error schema fields must not shadow `Error`'s own. Fields are assigned onto the 
 or `stack` field replaces what identifies the error as an error — `Cause.pretty`, `String(error)`,
 the stack header, OTLP `exception.type`/`exception.stacktrace` all read it (measured). Name for what
 it holds (`userName`), not where it sits. `message`/`cause` stay legal.
-Enforced: `local/no-shadowed-error-field`.
+Enforced: `begone-slop/no-shadowed-error-field`.
 :::
 
 :::warning
@@ -153,26 +153,47 @@ sort above constants, which would force every schema type away from its schema.
   and the casing separates them from computed bindings. **Not enforced**: oxlint has no
   `naming-convention`, and the type filter that made the ESLint rule precise needs type info. Review
   catches this one.
-- Comments explain WHY, and are short and few. One recording a fact that is expensive to rediscover
-  earns its place; one narrating the code does not. Prefer a single line to a paragraph.
 - Descriptive, boring names. Long over clever. No abbreviations needing a decoder.
 - Temp work in `tmp/` (gitignored), never `/tmp`.
 
 :::warning
-A number in a comment must be one somebody measured. If you are reaching for a plausible one, you do
-not have the fact yet.
+Code carries no comments. A name that needs a sentence beside it is the wrong name; a block that
+needs one wants extracting. Enforced: `begone-slop/no-comments`.
+
+The knowledge does not evaporate — it moves to `docs/`, as a log of decisions, lessons learned and
+implementation details. A `docs/` entry names no file, symbol or line: those rot, and an entry
+pinned to a line is a comment with extra steps. Write what was decided and why it held.
+
+Two exceptions, both narrow. A `SAFETY:` comment is required beside every type assertion and is the
+only prose the rule admits. Tooling directives — `oxlint-disable`, `@ts-expect-error`, triple-slash
+references, shebangs — are not comments, and the rule leaves them alone.
+
+A number you write anywhere must be one somebody measured. If you are reaching for a plausible one,
+you do not have the fact yet.
 :::
 
-Local rules in `lint/`, written with `effect-oxlint` and assembled by `Plugin.define` in
-`lint/plugin.ts`:
+The local rules live in `packages/begone-slop`, one file per rule under `src/rules/`, assembled by
+`Plugin.define` in `src/index.ts`. `preset.json` carries the severities and is what `.oxlintrc.json`
+extends — it is the list of what is on, so read it rather than restating it here.
+
+:::warning
+`preset.json` sets `"plugins": []`. Without it, extending the preset re-enables oxlint's own
+default plugin set (`unicorn`, `oxc`) on top, which fails the gate on rules nobody chose (measured:
+7 reports). A preset that turns things on by omission is worse than no preset.
+:::
+
+The ones with behaviour worth knowing before you trip on them:
 
 - `statement-order` — imports > type-defs > constants > functions > variables > modules > exports.
-- `expect-padding` — a run of `expect()` is ONE block: blank line around it, none inside.
+- `expect-padding` — a run of `expect()` is ONE block: blank line around it, none inside. Applies to
+  test files only, via an `.oxlintrc.json` override.
 - `padding-line-between-statements` — the vertical-spacing spec, ported from `@stylistic`; oxlint has
   no equivalent. The spec stays declarative in `.oxlintrc.json`, as ONE array argument — `Rule.define`
   decodes `options[0]` only — validated by a `Schema` rather than by hand.
 - `no-tag-access` — no `x._tag`, `switch (x._tag)`, `const { _tag } = x`. Defining a tag is fine.
 - `no-shadowed-error-field` — no `name`/`stack` field on `TaggedErrorClass`/`ErrorClass`.
+- `no-comments` and `require-safety-comment-for-type-assertion` are one doctrine in two rules: prose
+  is banned everywhere except where an assertion demands it.
 
 Writing one: `Rule.define({ name, meta: Rule.meta(…), options?, create: function*() {…} })`, whose
 `create` yields `RuleContext` and returns a visitor of `(node) => Effect<void, never, RuleContext>`.
@@ -190,7 +211,7 @@ handlers, collapsing every key to that signature. Narrow inside the handler.
 
 :::caution
 oxlint's JS plugin support is **alpha and explicitly not semver-bound** (per its shipped config
-schema). All five local rules ride on it. An oxlint upgrade can break them without a major bump —
+schema). Every local rule rides on it. An oxlint upgrade can break them without a major bump —
 `bun run test` is what catches that, so run it after any oxlint bump. Bump `effect-oxlint` with it:
 it pins `@oxlint/plugins`.
 :::
@@ -207,16 +228,23 @@ Do not guess about Effect, oxc or Bun. Do not trust a plausible claim in a revie
    list of every option and rule — better than the docs, and it is what shipped.
 2. Probe behaviour — throwaway `__probe.ts` in `tmp/`, run with `bun`, delete after. Probing oxlint
    is the exception: it skips gitignored paths, and `tmp/` is gitignored, so it reports "No files
-   found to lint". Put those probes in `lint/__probe*` and delete after.
-3. Prove a lint rule REJECTS, not just that it passes clean code. `lint/rules.test.ts` is the shape:
-   a fixture that MUST be rejected, at known lines.
-4. Record it — a comment at the site when the fact explains one line, a ledger otherwise.
+   found to lint". Put those probes in `packages/begone-slop/__probe*` and delete after.
+3. Prove a lint rule REJECTS, not just that it passes clean code.
+   `packages/begone-slop/test/rules.test.ts` is the shape: a fixture that MUST be rejected, at known
+   lines, plus a `fixtures/valid/` twin that MUST report nothing. A rule with only the first half
+   passes just as well when it fires on everything. A coverage test reconciles the rule names the
+   plugin itself defines against both halves, so a rule added without fixtures — or one whose
+   fixture is deleted — fails that test instead of quietly shrinking the suite.
+4. Record it in `docs/` — never as a comment; `no-comments` rejects one anyway.
 :::
 
 :::warning
-`lint/fixtures/` is deliberately malformed — it is the rule tests' input. It is excluded from both
-oxlint and oxfmt. Formatting it would repair the violations and turn those tests green against
-nothing.
+`packages/begone-slop/test/fixtures/` is deliberately malformed — it is the rule tests' input. It is
+excluded from both oxlint and oxfmt. Formatting it would repair the violations and turn those tests
+green against nothing.
+
+`fixtures/valid/` is the opposite and must stay genuinely clean, but it is excluded too: it is
+checked by running oxlint from inside the test, against a config naming one rule.
 :::
 
 ## Pull requests
