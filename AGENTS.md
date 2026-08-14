@@ -6,14 +6,18 @@ Members live in `packages/*`. `packages/tsconfig` holds the shared TS base every
 Toolchain is oxc + TypeScript 7: `oxlint` (lint), `oxfmt` (format), `typescript@7` with
 `@effect/tsgo`. No ESLint, no dprint, no Prettier.
 
-:::warning
-Lint runs as `bunx --bun oxlint`, never bare `oxlint`. The local rules are TypeScript
-(`packages/begone-slop`, built on `effect-oxlint`), and oxlint imports its JS plugins with whatever
-runtime is executing it. `node_modules/.bin/oxlint` is `#!/usr/bin/env node`, which dies on a `.ts`
-plugin with `ERR_UNKNOWN_FILE_EXTENSION` (measured). `--bun` is what makes it Bun's import.
+The house lint rules are `@jliocsar/begone-slop`, a published oxlint plugin developed in its own repo. It is
+an ordinary dependency here: `.oxlintrc.json` loads it by bare specifier and extends its
+`preset.json` through an explicit `./node_modules/` path, because `jsPlugins` resolves a package
+specifier and `extends` does not (measured).
 
-`effect` is pinned EXACTLY at the version `effect-oxlint` peer-requires; it is a lint dependency
-here, not product code.
+:::warning
+Fix a rule in the `begone-slop` repo, never here — there is nothing to edit in this one. It ships
+compiled ESM, so `node_modules/@jliocsar/begone-slop/dist` is build output. Reach for `bun run lint` and read
+its `README.md` for the rule list.
+
+`lint` passes `--no-error-on-unmatched-pattern`: this repo carries no product code, and oxlint
+otherwise exits non-zero when it matches no files, failing the gate on an empty template.
 :::
 
 The ~84 `effecttsgo/*` Effect rules come from `@effect/tsgo`'s `recommended` preset, which
@@ -64,8 +68,7 @@ breaks, and the spacing rules judge the result.
   across members. Not lintable in a flat layout (a sibling climb spells `../../other`, naming no
   directory), so it is on you. If the import you want is not exported, export it.
 - `packages/tsconfig` has no `scripts` at all: it ships a tsconfig and nothing runnable.
-- `packages/begone-slop` is the lint plugin: every local rule, its preset, and its tests. It is a
-  member like any other, so it owns its `tsconfig.json` and there is no root one.
+- There is no root `tsconfig.json`. Every member owns its own and extends the shared base.
 
 :::warning
 Every member with source needs a `test` script. The gate runs
@@ -172,14 +175,15 @@ A number you write anywhere must be one somebody measured. If you are reaching f
 you do not have the fact yet.
 :::
 
-The local rules live in `packages/begone-slop`, one file per rule under `src/rules/`, assembled by
-`Plugin.define` in `src/index.ts`. `preset.json` carries the severities and is what `.oxlintrc.json`
-extends — it is the list of what is on, so read it rather than restating it here.
+`begone-slop`'s `preset.json` carries the severities and is what `.oxlintrc.json` extends — it is
+the list of what is on, so read it rather than restating it here. Its `README.md` describes every
+rule.
 
 :::warning
-`preset.json` sets `"plugins": []`. Without it, extending the preset re-enables oxlint's own
-default plugin set (`unicorn`, `oxc`) on top, which fails the gate on rules nobody chose (measured:
-7 reports). A preset that turns things on by omission is worse than no preset.
+That preset sets `"plugins": []`. Without it, extending the preset re-enables oxlint's own default
+plugin set (`unicorn`, `oxc`) on top, which fails the gate on rules nobody chose (measured: 7
+reports). If you want those plugins, name them in this repo's own `plugins` array — later config
+wins.
 :::
 
 The ones with behaviour worth knowing before you trip on them:
@@ -195,25 +199,11 @@ The ones with behaviour worth knowing before you trip on them:
 - `no-comments` and `require-safety-comment-for-type-assertion` are one doctrine in two rules: prose
   is banned everywhere except where an assertion demands it.
 
-Writing one: `Rule.define({ name, meta: Rule.meta(…), options?, create: function*() {…} })`, whose
-`create` yields `RuleContext` and returns a visitor of `(node) => Effect<void, never, RuleContext>`.
-Report with `context.report(Diagnostic.fromId(…))`, fix with `Diagnostic.withFix`.
-
-:::warning
-A rule taking options needs `meta.schema` as well as `options` — oxlint refuses options outright when
-`schema` is absent, before the Effect `Schema` ever runs. `Rule.meta` does not carry it, so spread it
-in.
-
-Visitor handlers take `ESTree.Node`, not the narrowed type. `TypedEffectVisitor` maps over oxlint's
-`Visitor`, which intersects a `Record<string, (node: Node) => void>` catch-all over its per-key
-handlers, collapsing every key to that signature. Narrow inside the handler.
-:::
-
 :::caution
 oxlint's JS plugin support is **alpha and explicitly not semver-bound** (per its shipped config
-schema). Every local rule rides on it. An oxlint upgrade can break them without a major bump —
-`bun run test` is what catches that, so run it after any oxlint bump. Bump `effect-oxlint` with it:
-it pins `@oxlint/plugins`.
+schema). Every one of those rules rides on it, so an oxlint upgrade can change their behaviour
+without a major bump. The plugin's own test suite is what catches that — after bumping oxlint here,
+bump and test it there too rather than assuming the pair still agree.
 :::
 
 ## Establishing a fact
@@ -228,23 +218,9 @@ Do not guess about Effect, oxc or Bun. Do not trust a plausible claim in a revie
    list of every option and rule — better than the docs, and it is what shipped.
 2. Probe behaviour — throwaway `__probe.ts` in `tmp/`, run with `bun`, delete after. Probing oxlint
    is the exception: it skips gitignored paths, and `tmp/` is gitignored, so it reports "No files
-   found to lint". Put those probes in `packages/begone-slop/__probe*` and delete after.
-3. Prove a lint rule REJECTS, not just that it passes clean code.
-   `packages/begone-slop/test/rules.test.ts` is the shape: a fixture that MUST be rejected, at known
-   lines, plus a `fixtures/valid/` twin that MUST report nothing. A rule with only the first half
-   passes just as well when it fires on everything. A coverage test reconciles the rule names the
-   plugin itself defines against both halves, so a rule added without fixtures — or one whose
-   fixture is deleted — fails that test instead of quietly shrinking the suite.
-4. Record it in `docs/` — never as a comment; `no-comments` rejects one anyway.
-:::
-
-:::warning
-`packages/begone-slop/test/fixtures/` is deliberately malformed — it is the rule tests' input. It is
-excluded from both oxlint and oxfmt. Formatting it would repair the violations and turn those tests
-green against nothing.
-
-`fixtures/valid/` is the opposite and must stay genuinely clean, but it is excluded too: it is
-checked by running oxlint from inside the test, against a config naming one rule.
+   found to lint" (measured — it does this even with `--no-ignore`, and even for a project nested
+   under the ignored directory). Probe it from a directory outside any ignored tree.
+3. Record it in `docs/` — never as a comment; `no-comments` rejects one anyway.
 :::
 
 ## Pull requests
@@ -289,10 +265,10 @@ request that is plainly general (`never read _tag` is about every file) gets pro
 
 Strongest enforcement available, in order:
 
-1. An oxlint rule — machine-checked, cannot drift, often auto-fixable. Prefer a built-in; write a
-   local JS-plugin rule only when oxlint has none, and test it.
+1. An oxlint rule — machine-checked, cannot drift, often auto-fixable. Prefer a built-in; add a
+   `begone-slop` rule, in its own repo and with its own tests, only when oxlint has none.
 2. A line here — every agent reads it, but prose can be misread.
-3. A comment at the call site — for a one-off fact, not a rule.
+3. A `docs/` entry — for a one-off fact, not a rule. Never a comment; `no-comments` rejects one.
 
 Codify in the same change as the fix, never "later"; a pattern living only in a conversation dies
 with the session.

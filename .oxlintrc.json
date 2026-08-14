@@ -5,7 +5,7 @@
   // require. Extends are applied in order and rules below take precedence.
   "extends": [
     "./node_modules/@effect/tsgo/oxlint-presets/recommended.json",
-    "./packages/begone-slop/preset.json"
+    "./node_modules/@jliocsar/begone-slop/preset.json"
   ],
 
   // Listing plugins explicitly is what turns off oxlint's unicorn/oxc defaults.
@@ -17,19 +17,11 @@
     "pedantic": "error"
   },
 
-  "ignorePatterns": [
-    "**/dist/**",
-    "**/*.d.ts",
-    ".claude/**",
-    ".agents/**",
-    ".husky/**",
-    // Deliberate violations: the rule tests' input.
-    "packages/begone-slop/test/fixtures/**"
-  ],
+  "ignorePatterns": ["**/dist/**", "**/*.d.ts", ".claude/**", ".agents/**", ".husky/**"],
 
-  // Loaded by Bun, not Node: `Plugin.define` and the rules are TypeScript.
-  // The severities live in the package's own `preset.json`, extended above.
-  "jsPlugins": ["./packages/begone-slop/src/index.ts"],
+  // `jsPlugins` resolves a package specifier; `extends` above does not, hence
+  // the path. The severities live in the package's own `preset.json`.
+  "jsPlugins": ["@jliocsar/begone-slop"],
 
   "rules": {
     // Leaf imports only. A barrel is the bare root, `effect/testing`, or a single
@@ -88,13 +80,6 @@
   },
 
   "overrides": [
-    {
-      // The rule tests shell out to oxlint; `Bun.$` is a promise, not an Effect.
-      "files": ["packages/begone-slop/test/*.test.ts"],
-      "rules": {
-        "effecttsgo/async-function": "off"
-      }
-    },
     {
       "files": ["**/*.test.ts", "**/test/**/*.ts"],
       "rules": {

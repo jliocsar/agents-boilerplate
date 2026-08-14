@@ -14,7 +14,7 @@ Everything is oxc + TypeScript 7. No ESLint, no dprint, no Prettier.
 | [oxlint](https://oxc.rs)                                                                                         | Lint, including the type-aware pass           |
 | [oxfmt](https://oxc.rs)                                                                                          | Format                                        |
 | [typescript@7](https://github.com/microsoft/typescript-go) + [`@effect/tsgo`](https://github.com/Effect-TS/tsgo) | Typecheck, and ~84 Effect-specific lint rules |
-| [`effect-oxlint`](https://github.com/mpsuesser/effect-oxlint)                                                    | The five local lint rules, written in Effect  |
+| [`@jliocsar/begone-slop`](https://github.com/jliocsar/begone-slop)                                               | The house lint rules                          |
 | [Bun](https://bun.sh)                                                                                            | Runtime, package manager, test runner         |
 
 ## Getting started
@@ -40,9 +40,9 @@ breaks the spacing rules judge.
 
 ```
 packages/           workspace members; packages/tsconfig holds the shared TS base
-lint/               the local oxlint rules, their fixtures and their tests
 .oxlintrc.json      every rule, commented where the behaviour is surprising
 AGENTS.md           conventions and invariants (CLAUDE.md is a symlink to it)
+docs/               the decision log: what was measured, and what it cost to find out
 ```
 
 Every member with source needs a `test` script: the gate runs
@@ -54,43 +54,25 @@ Beyond oxlint's `correctness`, `suspicious` and `pedantic` categories and the `e
 
 - **Leaf imports only.** `effect/Effect`, not `effect`; `effect/unstable/schema/Schema`, not
   `effect/unstable/schema`.
-- **`local/no-tag-access`** — never read `_tag`; use `Match.tag`/`Match.tags`/`Match.tagsExhaustive`
-  or a library guard, so a new variant fails to compile instead of falling through.
-- **`local/no-shadowed-error-field`** — no `name`/`stack` field on a `TaggedErrorClass`, which would
-  overwrite what identifies the error as an error.
-- **`local/statement-order`** — imports > type-defs > constants > functions > variables > modules >
-  exports.
-- **`local/padding-line-between-statements`** and **`local/expect-padding`** — vertical spacing, both
-  auto-fixable.
+- **`begone-slop/no-tag-access`** — never read `_tag`; use `Match.tag`/`Match.tags`/
+  `Match.tagsExhaustive` or a library guard, so a new variant fails to compile instead of falling
+  through.
+- **`begone-slop/no-shadowed-error-field`** — no `name`/`stack` field on a `TaggedErrorClass`, which
+  would overwrite what identifies the error as an error.
+- **`begone-slop/no-comments`** — a name needing a sentence beside it is the wrong name; durable
+  knowledge belongs in `docs/`. `SAFETY:` comments and tooling directives are exempt.
+- **`begone-slop/statement-order`** — imports > type-defs > constants > functions > variables >
+  modules > exports.
+- **`begone-slop/padding-line-between-statements`** and **`begone-slop/expect-padding`** — vertical
+  spacing, both auto-fixable.
+
+The full rule list is the plugin's `preset.json`, and its `README.md` describes each one.
 
 Lint invocations pass `--deny-warnings`: the Effect preset ships most of its rules as warnings, and a
 warning that cannot fail the gate is one nobody fixes.
 
-## Writing a local rule
+## Changing a rule
 
-Rules live in `lint/`, are written with `effect-oxlint`, and are assembled by `Plugin.define` in
-`lint/plugin.ts`:
-
-```ts
-export default Rule.define({
-  name: 'no-tag-access',
-  meta: Rule.meta({ type: 'problem', description: '…', messages: { noTagAccess: MESSAGE } }),
-  create: function* () {
-    const context = yield* RuleContext
-
-    return {
-      MemberExpression: (node) =>
-        readsTheTag(node)
-          ? context.report(Diagnostic.fromId({ node, messageId: 'noTagAccess' }))
-          : Effect.void,
-    }
-  },
-})
-```
-
-Prove it **rejects**, not that it passes clean code: add a deliberately malformed fixture under
-`lint/fixtures/` and assert the reported lines in `lint/rules.test.ts`.
-
-Because the plugin is TypeScript, oxlint has to run under Bun — every invocation is
-`bunx --bun oxlint`. The `node_modules/.bin/oxlint` shim is `#!/usr/bin/env node`, which cannot
-import a `.ts` plugin.
+The house rules live in [their own repository](https://github.com/jliocsar/begone-slop) and arrive
+here as an ordinary dependency, compiled. There is nothing rule-shaped to edit in this repo — fix it
+there, publish, and bump the version here.

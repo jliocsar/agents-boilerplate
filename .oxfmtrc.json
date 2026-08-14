@@ -11,8 +11,6 @@
   "sortPackageJson": true,
 
   "ignorePatterns": [
-    // Deliberate violations: the rule tests' input.
-    "packages/begone-slop/test/fixtures",
     "**/node_modules",
     "**/dist",
     "bun.lock",

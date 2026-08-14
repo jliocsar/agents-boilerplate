@@ -1,9 +1,0 @@
-const arraySpread = [...(condition ? [] : [value])]
-const callSpread = call(...(condition ? [] : [value]))
-const bothBranchesPopulated = { ...(condition ? { first: value } : { second: value }) }
-const emptyBranchIsABinding = { ...(condition ? empty : { value }) }
-const plainSpread = { ...base }
-const nullishFallback = { ...(base ?? {}) }
-const logicalBranch = { ...(condition && { value }) }
-const nestedTernariesArePopulated = { ...(condition ? { value } : other ? { value } : { fallback }) }
-const emptyObjectAsAProperty = { extras: condition ? { value } : {} }

@@ -23,17 +23,21 @@ if [ "$stop_hook_active" = "true" ]; then exit 0; fi
 
 cd "${CLAUDE_PROJECT_DIR:-.}" 2>/dev/null || true
 
-# The plugin is TypeScript, so oxlint has to run under Bun, not the Node shim.
 if [ ! -x node_modules/.bin/oxlint ]; then exit 0; fi
 
-# Dedupe, then filter to files that still exist.
+# Dedupe, then keep files that still exist AND belong to this repo. A sibling
+# checkout has its own config and its own gate; linting it with this repo's
+# config reports against rules it never opted into.
+project=$(pwd -P)
 files=$(sort -u "$queue" | while IFS= read -r f; do
-  if [ -f "$f" ]; then printf '%s\n' "$f"; fi
+  if [ ! -f "$f" ]; then continue; fi
+  abs=$(cd "$(dirname "$f")" 2>/dev/null && printf '%s/%s' "$(pwd -P)" "$(basename "$f")") || continue
+  case "$abs" in "$project"/*) printf '%s\n' "$abs" ;; esac
 done)
 
 if [ -z "$files" ]; then exit 0; fi
 
-out=$(printf '%s\n' "$files" | xargs bunx --bun oxlint --deny-warnings --no-error-on-unmatched-pattern 2>&1)
+out=$(printf '%s\n' "$files" | xargs node_modules/.bin/oxlint --deny-warnings --no-error-on-unmatched-pattern 2>&1)
 code=$?
 
 if [ $code -ne 0 ]; then
