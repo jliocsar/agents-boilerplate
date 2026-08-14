@@ -9,13 +9,13 @@ code. Clone it, add a package under `packages/`, and the gate is already wired.
 
 Everything is oxc + TypeScript 7. No ESLint, no dprint, no Prettier.
 
-| Tool                                                                                                             | Job                                           |
-| ---------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
-| [oxlint](https://oxc.rs)                                                                                         | Lint, including the type-aware pass           |
-| [oxfmt](https://oxc.rs)                                                                                          | Format                                        |
-| [typescript@7](https://github.com/microsoft/typescript-go) + [`@effect/tsgo`](https://github.com/Effect-TS/tsgo) | Typecheck, and ~84 Effect-specific lint rules |
-| [`@jliocsar/begone-slop`](https://github.com/jliocsar/begone-slop)                                               | The house lint rules                          |
-| [Bun](https://bun.sh)                                                                                            | Runtime, package manager, test runner         |
+| Tool                                                                                                             | Job                                          |
+| ---------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| [oxlint](https://oxc.rs)                                                                                         | Lint, including the type-aware pass          |
+| [oxfmt](https://oxc.rs)                                                                                          | Format                                       |
+| [typescript@7](https://github.com/microsoft/typescript-go) + [`@effect/tsgo`](https://github.com/Effect-TS/tsgo) | Typecheck, and 81 Effect-specific lint rules |
+| [`@jliocsar/begone-slop`](https://github.com/jliocsar/begone-slop)                                               | The house lint rules                         |
+| [Bun](https://bun.sh)                                                                                            | Runtime, package manager, test runner        |
 
 ## Getting started
 
@@ -41,8 +41,7 @@ breaks the spacing rules judge.
 ```
 packages/           workspace members; packages/tsconfig holds the shared TS base
 .oxlintrc.json      every rule, commented where the behaviour is surprising
-AGENTS.md           conventions and invariants (CLAUDE.md is a symlink to it)
-docs/               the decision log: what was measured, and what it cost to find out
+AGENTS.md           conventions, invariants and measured facts (CLAUDE.md symlinks to it)
 ```
 
 Every member with source needs a `test` script: the gate runs
@@ -60,7 +59,7 @@ Beyond oxlint's `correctness`, `suspicious` and `pedantic` categories and the `e
 - **`begone-slop/no-shadowed-error-field`** — no `name`/`stack` field on a `TaggedErrorClass`, which
   would overwrite what identifies the error as an error.
 - **`begone-slop/no-comments`** — a name needing a sentence beside it is the wrong name; durable
-  knowledge belongs in `docs/`. `SAFETY:` comments and tooling directives are exempt.
+  knowledge belongs in `AGENTS.md`. `SAFETY:` comments and tooling directives are exempt.
 - **`begone-slop/statement-order`** — imports > type-defs > constants > functions > variables >
   modules > exports.
 - **`begone-slop/padding-line-between-statements`** and **`begone-slop/expect-padding`** — vertical

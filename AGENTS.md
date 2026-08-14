@@ -20,7 +20,7 @@ its `README.md` for the rule list.
 otherwise exits non-zero when it matches no files, failing the gate on an empty template.
 :::
 
-The ~84 `effecttsgo/*` Effect rules come from `@effect/tsgo`'s `recommended` preset, which
+The 81 `effecttsgo/*` Effect rules come from `@effect/tsgo`'s `recommended` preset, which
 `.oxlintrc.json` extends. They are type-aware, and the preset turns type-aware mode on — which is
 why no `--type-aware` flag appears in the scripts.
 
@@ -35,6 +35,10 @@ install — do not "simplify" `prepare` down to `husky`.
 
 It also validates that `oxlint`, `oxlint-tsgolint` and `@effect/tsgo` are a supported triple, so
 bump the three together.
+
+Any reinstall reverts the patch, and `prepare` then refuses to redo it because its backups still
+exist — `Unknown plugin: 'effecttsgo'` is what that looks like. Run `bunx effect-tsgo unpatch
+--oxlint` first, then `bun run prepare` (measured, twice).
 :::
 
 :::warning
@@ -167,9 +171,9 @@ sort above constants, which would force every schema type away from its schema.
 Code carries no comments. A name that needs a sentence beside it is the wrong name; a block that
 needs one wants extracting. Enforced: `begone-slop/no-comments`.
 
-The knowledge does not evaporate — it moves to `docs/`, as a log of decisions, lessons learned and
-implementation details. A `docs/` entry names no file, symbol or line: those rot, and an entry
-pinned to a line is a comment with extra steps. Write what was decided and why it held.
+The knowledge does not evaporate — it moves into this file, as a decision, a lesson learned or an
+invariant worth stating. An entry here names no file, symbol or line: those rot, and an entry pinned
+to a line is a comment with extra steps. Write what was decided and why it held.
 
 Two exceptions, both narrow. A `SAFETY:` comment is required beside every type assertion and is the
 only prose the rule admits. Tooling directives — `oxlint-disable`, `@ts-expect-error`, triple-slash
@@ -216,7 +220,7 @@ Do not guess about Effect, oxc or Bun. Do not trust a plausible claim in a revie
 
 :::tip
 1. Read `node_modules/effect/src/**` — ground truth for API shape, and grepping it settles "is this
-   idiomatic" (e.g. `S["Type"]` appears 177 times in `Schema.ts`). Before anything depends on
+   idiomatic" (e.g. `S["Type"]` appears 98 times in `Schema.ts`). Before anything depends on
    `effect`, the hoisted copy is the same source: `node_modules/.bun/effect@*/node_modules/effect/src/**`.
    For oxlint and oxfmt, `node_modules/{oxlint,oxfmt}/configuration_schema.json` is the authoritative
    list of every option and rule — better than the docs, and it is what shipped.
@@ -224,7 +228,7 @@ Do not guess about Effect, oxc or Bun. Do not trust a plausible claim in a revie
    is the exception: it skips gitignored paths, and `tmp/` is gitignored, so it reports "No files
    found to lint" (measured — it does this even with `--no-ignore`, and even for a project nested
    under the ignored directory). Probe it from a directory outside any ignored tree.
-3. Record it in `docs/` — never as a comment; `no-comments` rejects one anyway.
+3. Record it here — never as a comment; `no-comments` rejects one anyway.
 :::
 
 ## Pull requests
@@ -271,8 +275,8 @@ Strongest enforcement available, in order:
 
 1. An oxlint rule — machine-checked, cannot drift, often auto-fixable. Prefer a built-in; add a
    `begone-slop` rule, in its own repo and with its own tests, only when oxlint has none.
-2. A line here — every agent reads it, but prose can be misread.
-3. A `docs/` entry — for a one-off fact, not a rule. Never a comment; `no-comments` rejects one.
+2. A line here — every agent reads it, but prose can be misread. A one-off measured fact goes here
+   too, stated as a fact rather than a rule. Never a comment; `no-comments` rejects one.
 
 Codify in the same change as the fix, never "later"; a pattern living only in a conversation dies
 with the session.
