@@ -24,6 +24,11 @@ exists — lives there, not here.
 - TypeScript is pinned exactly, with no caret range: the Effect toolchain ships prebuilt artifacts
   for specific TypeScript builds and fails outright with a missing-packaged-artifact error against
   any other one (measured). It is bumped with the Effect toolchain, or not at all.
+- The linter is pinned exactly for the same reason, and that pin was missing for a while. The
+  toolchain version in use carries linter artifacts for two releases only, so a caret range resolved
+  to a third on any install that did not reuse the lockfile, and the patch step failed outright
+  (measured in a clean checkout). A committed lockfile hides the problem indefinitely — it surfaces
+  the first time someone installs without one, which is exactly when nobody is looking for it.
 - Effect diagnostics are reported by the linter only. The language-service plugin's own diagnostics
   are turned off in the shared TypeScript base, or every Effect finding appears twice in an editor.
 - typescript-eslint refuses to load against TypeScript 7, so ESLint and its rule tester are

@@ -38,9 +38,13 @@ bump the three together.
 :::
 
 :::warning
-`typescript` is pinned EXACTLY (no `^`). `@effect/tsgo` ships prebuilt artifacts for specific
-TypeScript builds and fails with `ReplacementUnavailableError: Missing packaged artifact` against any
-other one. Bump it with `@effect/tsgo`, or not at all.
+`typescript` AND `oxlint` are pinned EXACTLY (no `^`). `@effect/tsgo` ships prebuilt artifacts for
+specific builds of each and fails with `ReplacementUnavailableError: Missing packaged artifact`
+against any other one. Bump them with `@effect/tsgo`, or not at all.
+
+The caret is the trap, not the version: `@effect/tsgo@0.36.1` carries oxlint artifacts for `1.76.0`
+and `1.77.0` only, so `^1.77.0` resolves to `1.78.0` on any fresh install and the patch dies
+(measured). A committed lockfile hides this until someone clones without one.
 :::
 
 Effect diagnostics are reported by oxlint only: the language-service plugin in
