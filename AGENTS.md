@@ -54,6 +54,21 @@ and `1.77.0` only, so `^1.77.0` resolves to `1.78.0` on any fresh install and th
 Effect diagnostics are reported by oxlint only: the language-service plugin in
 `packages/tsconfig/base.json` sets `diagnostics: false` so they do not appear twice.
 
+The shared base follows <https://www.effect.solutions/tsconfig>, minus what a no-emit Bun monorepo
+cannot use. Four recommendations are deliberately absent, so do not "restore" them:
+
+- `composite` — it exists for project references, and there are none here. It typechecks fine
+  alongside `noEmit` under TypeScript 7 (measured), but a base config cannot opt one member in.
+- `target: ES2022` / `module: NodeNext` — Bun runs the source, so `ESNext` plus `bundler` resolution
+  is the point. `NodeNext` would also forbid the `.ts` import extensions the base allows.
+- `rewriteRelativeImportExtensions`, `declaration`, `declarationMap`, `sourceMap` — all emit
+  options, and nothing emits.
+- top-level `plugins` — the recommendation puts it beside `compilerOptions`, where TypeScript
+  ignores it. It belongs inside.
+
+The `$schema` is the language-service fork of the schemastore one: the same tsconfig definitions,
+plus completion for the plugin's own options.
+
 ## First
 
 :::warning

@@ -1,5 +1,5 @@
 {
-  "$schema": "http://json.schemastore.org/tsconfig",
+  "$schema": "https://raw.githubusercontent.com/Effect-TS/language-service/refs/heads/main/schema.json",
   "compilerOptions": {
     "target": "ESNext",
     "lib": ["ESNext"],
@@ -10,16 +10,17 @@
     "verbatimModuleSyntax": true,
     "noEmit": true,
     "skipLibCheck": true,
+    "incremental": true,
 
     "strict": true,
+    "exactOptionalPropertyTypes": true,
     "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
 
-    // `diagnostics: false` because oxlint reports the Effect diagnostics via the
-    // effecttsgo plugin; leaving it on reports each of them twice.
     "plugins": [{ "name": "@effect/language-service", "diagnostics": false }]
   }
 }
