@@ -16,6 +16,10 @@ Fix a rule in the `begone-slop` repo, never here — there is nothing to edit in
 compiled ESM, so `node_modules/@jliocsar/begone-slop/dist` is build output. Reach for `bun run lint` and read
 its `README.md` for the rule list.
 
+The same goes for the compiler settings: the package publishes the house tsconfig as
+`@jliocsar/begone-slop/tsconfig`, and `packages/tsconfig/base.json` extends it. A house-wide
+compiler option is a release of that package, exactly like a rule.
+
 `lint` passes `--no-error-on-unmatched-pattern`: this repo carries no product code, and oxlint
 otherwise exits non-zero when it matches no files, failing the gate on an empty template.
 :::
@@ -51,23 +55,15 @@ and `1.77.0` only, so `^1.77.0` resolves to `1.78.0` on any fresh install and th
 (measured). A committed lockfile hides this until someone clones without one.
 :::
 
-Effect diagnostics are reported by oxlint only: the language-service plugin in
-`packages/tsconfig/base.json` sets `diagnostics: false` so they do not appear twice.
+Effect diagnostics are reported by oxlint only: the published base configures the language-service
+plugin with `diagnostics: false` so they do not appear twice. That block inherits through `extends`
+— measured, along with the fact that a child config can set `diagnostics: true` to get the compiler
+reporting them again.
 
-The shared base follows <https://www.effect.solutions/tsconfig>, minus what a no-emit Bun monorepo
-cannot use. Four recommendations are deliberately absent, so do not "restore" them:
-
-- `composite` — it exists for project references, and there are none here. It typechecks fine
-  alongside `noEmit` under TypeScript 7 (measured), but a base config cannot opt one member in.
-- `target: ES2022` / `module: NodeNext` — Bun runs the source, so `ESNext` plus `bundler` resolution
-  is the point. `NodeNext` would also forbid the `.ts` import extensions the base allows.
-- `rewriteRelativeImportExtensions`, `declaration`, `declarationMap`, `sourceMap` — all emit
-  options, and nothing emits.
-- top-level `plugins` — the recommendation puts it beside `compilerOptions`, where TypeScript
-  ignores it. It belongs inside.
-
-The `$schema` is the language-service fork of the schemastore one: the same tsconfig definitions,
-plus completion for the plugin's own options.
+The published base follows <https://www.effect.solutions/tsconfig> minus what a no-emit Bun project
+cannot use, and `begone-slop`'s README says which four recommendations are out and why. Everything
+local to this repo lives in `packages/tsconfig/base.json`, which today is `types: ["bun"]` and
+nothing else.
 
 ## First
 
@@ -92,6 +88,27 @@ breaks, and the spacing rules judge the result.
   directory), so it is on you. If the import you want is not exported, export it.
 - `packages/tsconfig` has no `scripts` at all: it ships a tsconfig and nothing runnable.
 - There is no root `tsconfig.json`. Every member owns its own and extends the shared base.
+
+:::warning
+A member that extends the shared base must depend on it, or the extends does not resolve:
+
+```jsonc
+// packages/<member>/package.json
+{ "devDependencies": { "@boilerplate/tsconfig": "workspace:*" } }
+```
+
+```jsonc
+// packages/<member>/tsconfig.json
+{ "extends": "@boilerplate/tsconfig/base.json", "include": ["src/**/*.ts"] }
+```
+
+Bun links a workspace member into `packages/<member>/node_modules` only where something declares it,
+and nothing hoists it to the root — so without that dependency the compiler reports
+`File '@boilerplate/tsconfig/base.json' not found` (measured). The second hop needs nothing: the
+base reaches `@jliocsar/begone-slop/tsconfig` through the root install. TypeScript's `extends`
+resolves a package specifier through the `exports` map, which is why that subpath carries no `.json`
+— oxlint's `extends` is the one that cannot.
+:::
 
 :::warning
 Every member with source needs a `test` script. The gate runs
