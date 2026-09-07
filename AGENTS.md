@@ -32,6 +32,16 @@ The preset ships most of them as `warn`, so every lint invocation passes `--deny
 warning that cannot fail the gate is one nobody fixes. Downgrade individual rules in
 `.oxlintrc.json` rather than dropping the flag.
 
+`.oxlintrc.json` also enables oxlint's own `correctness`, `suspicious` and `pedantic` categories.
+Pedantic is the one that bites, because its size and shape caps were written for ordinary
+TypeScript rather than for this style. `max-classes-per-file` is off for exactly that reason: one
+tagged error class per failure reason is the error doctrine here, so a module that can fail two
+ways already declares two classes, and a service tag makes a third. A cap of one never shrinks a
+module — it scatters one concern across several files and leaves the import graph with nodes that
+exist only to satisfy a linter. Its sibling `max-lines` is raised from a default of 300 (measured) to 1000, for the same
+reason: a line cap relocates code rather than shrinking it, and a module split to sit under
+one is a module the graph did not ask for.
+
 :::warning
 `prepare` runs `effect-tsgo patch --oxlint`, which patches the oxlint and TypeScript binaries in
 `node_modules`. Without it the Effect rules do not run. It is not optional and it re-runs on every
