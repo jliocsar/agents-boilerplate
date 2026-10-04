@@ -6,7 +6,7 @@
       "name": "boilerplate-monorepo",
       "devDependencies": {
         "@effect/tsgo": "^0.36.1",
-        "@jliocsar/begone-slop": "^0.2.2",
+        "@jliocsar/begone-slop": "^0.2.3",
         "@types/bun": "^1.3.14",
         "effect": "4.0.0-beta.100",
         "husky": "^9.1.7",
@@ -40,7 +40,7 @@
 
     "@effect/tsgo-win32-x64": ["@effect/tsgo-win32-x64@0.36.1", "", { "os": "win32", "cpu": "x64" }, "sha512-+rDjvR1Z48hNeoolBD2c6JDIfKeHIZZLCErtxBBff6ja06vXmBP8F62rCFnN0CC7gKvgussNHy4MM+WWNjLEqg=="],
 
-    "@jliocsar/begone-slop": ["@jliocsar/begone-slop@0.2.2", "", { "dependencies": { "@oxlint/plugins": "^1.86.0" }, "peerDependencies": { "oxlint": ">=1.77.0" } }, "sha512-skzIXKq+jmkUKjgpBBP9cYLM6EBpd4ZJAIDdaOISGNqPqRilcMCLRgXCK5I5rOAyC5i7+sv1dIurAENT2vxyTA=="],
+    "@jliocsar/begone-slop": ["@jliocsar/begone-slop@0.2.3", "", { "dependencies": { "@oxlint/plugins": "^1.86.0" }, "peerDependencies": { "oxlint": ">=1.77.0" } }, "sha512-i5gU1ZXADdHvWvoDRbVPvzy9LKbP5kOm/Mu+0MU+xRFsVb5rDAC7OyRdHrQgAsI73HWpd9C2ZU2PVvGxYmiIMw=="],
 
     "@msgpackr-extract/msgpackr-extract-darwin-arm64": ["@msgpackr-extract/msgpackr-extract-darwin-arm64@3.0.4", "", { "os": "darwin", "cpu": "arm64" }, "sha512-LCkGo6JDfaBhgST7UpPWgNgLINpcpabaHfyz5OBx75nUYxBsaEPxjnyNjWpeb/xBup/682QnBfRBy2/LvPutZQ=="],
 
