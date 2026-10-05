@@ -65,15 +65,16 @@ and `1.77.0` only, so `^1.77.0` resolves to `1.78.0` on any fresh install and th
 (measured). A committed lockfile hides this until someone clones without one.
 :::
 
-Effect diagnostics are reported by oxlint only: the published base configures the language-service
+Effect diagnostics are reported by oxlint only: the shared base configures the language-service
 plugin with `diagnostics: false` so they do not appear twice. That block inherits through `extends`
 — measured, along with the fact that a child config can set `diagnostics: true` to get the compiler
-reporting them again.
+reporting them again. `tsc --showConfig` omits the plugin block, so it cannot confirm either; a
+floating Effect under `tsc --noEmit` can.
 
 The published base follows <https://www.effect.solutions/tsconfig> minus what a no-emit Bun project
-cannot use, and `begone-slop`'s README says which four recommendations are out and why. Everything
-local to this repo lives in `packages/tsconfig/base.json`, which today is `types: ["bun"]` and
-nothing else.
+cannot use, and `begone-slop`'s README says which four recommendations are out and why. It carries
+no plugin block. Everything local to this repo lives in `packages/tsconfig/base.json`, which today
+is `types: ["bun"]` and the language-service plugin entry.
 
 ## First
 
@@ -239,10 +240,12 @@ wins.
 The ones with behaviour worth knowing before you trip on them:
 
 - `statement-order` — imports > type-defs > constants > functions > variables > modules > exports.
+  Single-line `SCREAMING_CASE` constants form two groups, private above exported, no blank line
+  inside a group and one around it. A private one may sit below an exported one only if it reads it.
 - `expect-padding` — a run of `expect()` is ONE block: blank line around it, none inside. Applies to
   test files only, via an `.oxlintrc.json` override.
 - `padding-line-between-statements` — the vertical-spacing spec, ported from `@stylistic`; oxlint has
-  no equivalent. The spec stays declarative in `.oxlintrc.json`, as ONE array argument — `Rule.define`
+  no equivalent. The spec stays declarative in `begone-slop`'s `preset.json`, as ONE array argument — `Rule.define`
   decodes `options[0]` only — validated by a `Schema` rather than by hand.
 - `no-tag-access` — no `x._tag`, `switch (x._tag)`, `const { _tag } = x`. Defining a tag is fine.
 - `no-shadowed-error-field` — no `name`/`stack` field on `TaggedErrorClass`/`ErrorClass`.
