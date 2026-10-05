@@ -72,9 +72,9 @@ reporting them again. `tsc --showConfig` omits the plugin block, so it cannot co
 floating Effect under `tsc --noEmit` can.
 
 The published base follows <https://www.effect.solutions/tsconfig> minus what a no-emit Bun project
-cannot use, and `begone-slop`'s README says which four recommendations are out and why. It carries
-no plugin block. Everything local to this repo lives in `packages/tsconfig/base.json`, which today
-is `types: ["bun"]` and the language-service plugin entry.
+cannot use, and `begone-slop`'s README lists what it keeps. It carries no plugin block. Everything
+local to this repo lives in `packages/tsconfig/base.json`, which today is `types: ["bun"]` and the
+language-service plugin entry.
 
 ## First
 
@@ -245,8 +245,9 @@ The ones with behaviour worth knowing before you trip on them:
 - `expect-padding` — a run of `expect()` is ONE block: blank line around it, none inside. Applies to
   test files only, via an `.oxlintrc.json` override.
 - `padding-line-between-statements` — the vertical-spacing spec, ported from `@stylistic`; oxlint has
-  no equivalent. The spec stays declarative in `begone-slop`'s `preset.json`, as ONE array argument — `Rule.define`
-  decodes `options[0]` only — validated by a `Schema` rather than by hand.
+  no equivalent. The spec stays declarative in `begone-slop`'s `preset.json`, as ONE array
+  argument — the rule reads `options[0]` only — which oxlint validates against the rule's JSON
+  `meta.schema` before the rule runs.
 - `no-tag-access` — no `x._tag`, `switch (x._tag)`, `const { _tag } = x`. Defining a tag is fine.
 - `no-shadowed-error-field` — no `name`/`stack` field on `TaggedErrorClass`/`ErrorClass`.
 - `no-comments` and `require-safety-comment-for-type-assertion` are one doctrine in two rules: prose
