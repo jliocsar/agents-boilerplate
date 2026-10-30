@@ -175,13 +175,17 @@ disguise; write the type. The skill's boundary reference has the code.
 
 ## Rules
 
-Leaf imports only: `effect/Effect`, `effect/unstable/cli/Command`.
+Leaf imports only: `effect/Effect`, `effect/cli/Command`.
 
 :::warning
-Every barrel is banned — the `effect` root AND each subpath index (`effect/unstable/schema`,
+Every barrel is banned — the `effect` root AND each subpath index (`effect/schema`, `effect/cli`,
 `effect/testing`, …). The subpath ones are what keep getting written. Enforced by a regex in
-`no-restricted-imports`: a barrel is the bare root, `effect/testing`, or a single lowercase segment
-under `unstable/`, since every leaf module is PascalCase. Type-only imports are exempt.
+`no-restricted-imports`: a barrel is the bare root or a single lowercase segment under it, since
+every leaf module is PascalCase. Type-only imports are exempt.
+
+effect 4.0 dropped the `unstable/` prefix: `effect/unstable/cli/Command` became `effect/cli/Command`
+(measured on 4.0.5). A barrel regex written against the old prefix matches nothing and passes
+silently.
 :::
 
 :::warning
@@ -247,7 +251,7 @@ This is why `statement-order` leaves a type alias containing `typeof` unranked: 
 sort above constants, which would force every schema type away from its schema.
 :::
 
-- Errors are `Schema.TaggedErrorClass` with a `message` getter: full sentence, names the fix where
+- Errors are `Schema.TaggedError` with a `message` getter: full sentence, names the fix where
   possible. One reporter prints `error.message`; an error without one exits silently.
 - Module-level primitive constants are `SCREAMING_SNAKE_CASE` — they are the knobs and magic values,
   and the casing separates them from computed bindings. **Not enforced**: oxlint has no
@@ -295,7 +299,10 @@ The ones with behaviour worth knowing before you trip on them:
   argument — the rule reads `options[0]` only — which oxlint validates against the rule's JSON
   `meta.schema` before the rule runs.
 - `no-tag-access` — no `x._tag`, `switch (x._tag)`, `const { _tag } = x`. Defining a tag is fine.
-- `no-shadowed-error-field` — no `name`/`stack` field on `TaggedErrorClass`/`ErrorClass`.
+- `no-shadowed-error-field` — no `name`/`stack` field on an error class. As of `begone-slop` 0.2.9
+  it matches only the factory names `TaggedErrorClass`/`ErrorClass`, which effect 4.0.5 does not
+  have, so it catches nothing here until it learns `TaggedError`/`Error` (measured). The doctrine
+  still holds; review catches it meanwhile.
 - `no-comments` and `require-safety-comment-for-type-assertion` are one doctrine in two rules: prose
   is banned everywhere except where an assertion demands it.
 
