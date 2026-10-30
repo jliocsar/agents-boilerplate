@@ -2,7 +2,7 @@
 
 Two export paths:
 - Full OTel integration → `@effect/opentelemetry` (`NodeSdk`, `WebSdk`, `Tracer`, `Metrics`, `Logger`, `Resource`). Use when wiring an existing OTel SDK / instrumentations.
-- Lightweight, no peer deps → `effect/unstable/observability` (`Otlp*`, `PrometheusMetrics`). Prefer for new projects.
+- Lightweight, no peer deps → `effect/observability` (`Otlp*`, `PrometheusMetrics`). Prefer for new projects.
 
 ## @effect/opentelemetry — NodeSdk / WebSdk
 
@@ -57,7 +57,7 @@ const NodeSdkLayer = NodeSdk.layer(() => ({
 
 Register Node auto-instrumentations BEFORE importing modules that should be patched — many Node instrumentations hook module loading. Provide the SDK layer once, at the top of the app.
 
-## Lightweight alt — effect/unstable/observability
+## Lightweight alt — effect/observability
 
 Modules: `Otlp`, `OtlpExporter`, `OtlpTracer`, `OtlpLogger`, `OtlpMetrics`, `OtlpResource`, `OtlpSerialization`, `PrometheusMetrics`.
 
@@ -65,8 +65,8 @@ HTTP exporters need a serializer (`OtlpSerialization.layerJson`) and an `HttpCli
 
 ```ts
 import { Layer } from "effect"
-import { FetchHttpClient } from "effect/unstable/http"
-import { OtlpLogger, OtlpSerialization, OtlpTracer } from "effect/unstable/observability"
+import { FetchHttpClient } from "effect/http"
+import { OtlpLogger, OtlpSerialization, OtlpTracer } from "effect/observability"
 
 const OtlpTracingLayer = OtlpTracer.layer({
   url: "http://localhost:4318/v1/traces",
@@ -110,6 +110,6 @@ const ObservabilityLayer = Otlp.layerJson({
 ## DO / DON'T
 
 - DO provide the SDK/exporter layer once, at the top of the app (provide LAST).
-- DO prefer `effect/unstable/observability` for new projects (zero peer deps).
+- DO prefer `effect/observability` for new projects (zero peer deps).
 - DO pass a `resource` to an `Otlp*` layer so ops can override service name/version via `OTEL_*` env vars without a rebuild (`OtlpResource.fromConfig` merges them).
 - DON'T import patched modules before registering Node auto-instrumentations.

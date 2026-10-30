@@ -1,6 +1,6 @@
 # Effect v4 AI
 
-Core abstractions live in `effect/unstable/ai`; providers are separate `@effect/ai-*` packages.
+Core abstractions live in `effect/ai`; providers are separate `@effect/ai-*` packages.
 
 - [Language Model](language-model.md): `LanguageModel.generateText`/`streamText`, response accessors, stream part filtering, provider-agnostic pattern.
 - [Providers](providers.md): `@effect/ai-anthropic`/`-openai`/`-openrouter`/`-openai-compat`; `Provider.model(id)` as Layer, `captureRequirements`, `Client.layerConfig`.

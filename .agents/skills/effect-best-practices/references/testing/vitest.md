@@ -26,7 +26,7 @@ import { assert, describe, it } from "@effect/vitest"
 import { afterAll, assert, describe, expect, it, layer } from "@effect/vitest"
 import * as Effect from "effect/Effect"
 import * as TestClock from "effect/testing/TestClock"
-import { FastCheck, TestClock } from "effect/testing"
+import { TestClock } from "effect/testing"
 ```
 
 Both `effect/testing/TestClock` and `{ TestClock } from "effect/testing"` are valid.
@@ -63,7 +63,7 @@ describe("TestClock", () => {
 ```ts
 import { afterAll, expect, it, layer } from "@effect/vitest"
 import { Clock, Context, Duration, Effect, Fiber, Layer } from "effect"
-import { FastCheck, TestClock } from "effect/testing"
+import { TestClock } from "effect/testing"
 
 class Foo extends Context.Service<Foo, "foo">()("Foo") {
   static Live = Layer.succeed(Foo)("foo")
@@ -179,8 +179,8 @@ it.layer(FetchHttpClient.layer)("FetchHttpClient", (it) => {
 
 `it.effect.prop(name, arbitraries, ([values], ctx) => Effect, opts?)`:
 
-- `arbitraries` = array or record of `Schema.Schema` or `FastCheck.Arbitrary`. Schemas auto-convert via `Schema.toArbitrary`.
-- `opts.fastCheck` passes FastCheck `Parameters` (e.g. `{ fastCheck: { numRuns: 200 } }`).
+- `arbitraries` = array or record of `Schema.Schema` or `Arbitrary.Arbitrary` (`effect/Arbitrary`; there is no `FastCheck` export). Schemas auto-convert via `Arbitrary.schema`.
+- `opts.arbitrary` passes `Arbitrary.CheckOptions` (`runs`, `size`, `seed`, `maxShrinks`, ... e.g. `{ arbitrary: { runs: 200 } }`).
 
 ```ts
 it.effect.prop("reverse twice is identity", [Schema.String], ([value]) =>
@@ -189,5 +189,5 @@ it.effect.prop("reverse twice is identity", [Schema.String], ([value]) =>
   }))
 ```
 
-- DON'T pass Schemas to the bare top-level `prop` export — it throws on Schemas. Only `it.effect.prop`/`it.live.prop` accept Schemas.
+- The bare top-level `prop` export also accepts Schemas, but its body is a plain (non-Effect) property — use `it.effect.prop`/`it.live.prop` for an Effect body.
 - For `it.live.fails` timeout tests: vitest only LOGS the eventual failure.

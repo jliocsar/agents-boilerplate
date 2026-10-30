@@ -5,7 +5,7 @@
 Core: `EmbeddingModel.EmbeddingModel` service with `embed(input: string)` → `EmbedResponse { vector }` and `embedMany(inputs: string[])` → `EmbedManyResponse { embeddings, usage }`. Also `EmbeddingModel.Dimensions` service (number).
 
 ```ts
-import { EmbeddingModel } from "effect/unstable/ai"
+import { EmbeddingModel } from "effect/ai"
 import { OpenAiEmbeddingModel } from "@effect/ai-openai"
 import { Effect } from "effect"
 
@@ -27,12 +27,12 @@ const program = Effect.gen(function*() {
 
 ## Chat — stateful sessions
 
-Constructors: `Chat.empty: Effect<Service>`, `Chat.fromPrompt(prompt: Prompt.RawInput): Effect<Service>`, `Chat.fromJson(json: string): Effect<Service>`, `Chat.fromExport(data: unknown): Effect<Service>`, `Chat.makePersisted({...})`.
+Constructors: `Chat.empty: Effect<Chat>`, `Chat.fromPrompt(prompt: Prompt.RawInput): Effect<Chat>`, `Chat.fromJson(json: string): Effect<Chat, SchemaError>`, `Chat.fromExport(data: unknown): Effect<Chat, SchemaError>`, `Chat.makePersisted({...})`.
 
 History is kept in `session.history: Ref<Prompt.Prompt>`. Each turn appends automatically.
 
 ```ts
-import { Chat, Prompt } from "effect/unstable/ai"
+import { Chat, Prompt } from "effect/ai"
 import { Effect, Ref } from "effect"
 
 const session = yield* Chat.fromPrompt(
@@ -75,14 +75,14 @@ while (true) {
 
 ## AiError handling
 
-`AiError` is a `Schema.ErrorClass` with `_tag: "AiError"`, `module`, `method`, and a `reason: AiErrorReason`. `error.isRetryable` and `error.retryAfter` delegate to the reason.
+`AiError` is a `Schema.Error` with `_tag: "AiError"`, `module`, `method`, and a `reason: AiErrorReason`. `error.isRetryable` and `error.retryAfter` delegate to the reason.
 
 `AiErrorReason` union (18 members): `RateLimitError, QuotaExhaustedError, AuthenticationError, ContentPolicyError, InvalidRequestError, InternalProviderError, NetworkError, InvalidOutputError, StructuredOutputError, UnsupportedSchemaError, UnknownError, ToolNotFoundError, ToolParameterValidationError, InvalidToolResultError, ToolResultEncodingError, ToolConfigurationError, ToolkitRequiredError, InvalidUserInputError`. Each carries `_tag`, `message`, `isRetryable`.
 
-- DO map `AiError` → domain error with `Schema.TaggedErrorClass` embedding `AiError.AiErrorReason` (itself a Schema).
+- DO map `AiError` → domain error with `Schema.TaggedError` embedding `AiError.AiErrorReason` (itself a Schema).
 
 ```ts
-export class AiWriterError extends Schema.TaggedErrorClass<AiWriterError>()("AiWriterError", {
+export class AiWriterError extends Schema.TaggedError<AiWriterError>()("AiWriterError", {
   reason: AiError.AiErrorReason
 }) {
   static fromAiError(error: AiError.AiError) {

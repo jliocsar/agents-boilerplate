@@ -4,10 +4,10 @@
 
 ```ts
 import { SqlClient, SqlSchema, SqlResolver, SqlModel, Statement, Migrator, SqlError, SqlStream, SqlConnection }
-  from "effect/unstable/sql"
-import * as SqlClient from "effect/unstable/sql/SqlClient"
+  from "effect/sql"
+import * as SqlClient from "effect/sql/SqlClient"
 
-import { Model } from "effect/unstable/schema"
+import { Model } from "effect/schema"
 
 import { PgClient, PgMigrator } from "@effect/sql-pg"
 import { SqliteClient, SqliteMigrator } from "@effect/sql-sqlite-bun"
@@ -16,7 +16,7 @@ import { MysqlClient } from "@effect/sql-mysql2"
 ```
 
 - DO get the client via the service tag: `const sql = yield* SqlClient.SqlClient`.
-- DON'T write `import * as Sql from "effect/unstable/sql"` then `Sql.SqlClient` — `SqlClient` is itself a namespace; the tag is `SqlClient.SqlClient`.
+- DON'T write `import * as Sql from "effect/sql"` then `Sql.SqlClient` — `SqlClient` is itself a namespace; the tag is `SqlClient.SqlClient`.
 
 ## Building a SqlClient layer
 
@@ -49,7 +49,7 @@ const PgLive = PgClient.layer({
 })
 
 const PgFromEnv = PgClient.layerConfig({
-  url: Config.redacted("DATABASE_URL")
+  url: Config.Redacted("DATABASE_URL")
 })
 ```
 
@@ -167,9 +167,9 @@ const transfer = (from: number, to: number, amount: number) =>
 
 ## SqlError handling
 
-`SqlError` is a `Schema.TaggedErrorClass` with `_tag: "SqlError"` and a single `reason` field. `error.message`/`error.cause`/`error.isRetryable` delegate to the reason.
+`SqlError` is a `Schema.TaggedError` with `_tag: "SqlError"` and a single `reason` field. `error.message`/`error.cause`/`error.isRetryable` delegate to the reason.
 
-Reason tags (each a `Schema.TaggedErrorClass`, carrying `cause`, `message`, `operation`): `ConnectionError` (retryable), `AuthenticationError`, `AuthorizationError`, `SqlSyntaxError`, `UniqueViolation` (+ `constraint`), `ConstraintError`, `DeadlockError` (retryable), `SerializationError` (retryable), `LockTimeoutError` (retryable), `StatementTimeoutError` (retryable), `UnknownError`. Also `ResultLengthMismatch` (resolver) with `expected`/`actual`.
+Reason tags (each a `Schema.TaggedError`, carrying `cause`, `message`, `operation`): `ConnectionError` (retryable), `AuthenticationError`, `AuthorizationError`, `SqlSyntaxError`, `UniqueViolation` (+ `constraint`), `ConstraintError`, `DeadlockError` (retryable), `SerializationError` (retryable), `LockTimeoutError` (retryable), `StatementTimeoutError` (retryable), `UnknownError`. Also `ResultLengthMismatch` (resolver) with `expected`/`actual`.
 
 ```ts
 program.pipe(

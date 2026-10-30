@@ -1,9 +1,9 @@
 # Atoms (core)
 
-Core `Atom` module lives in **`effect/unstable/reactivity`** — NOT a separate `@effect/atom` core package.
+Core `Atom` module lives in **`effect/reactivity`** — NOT a separate `@effect/atom` core package.
 
 ```ts
-import { Atom, AtomRegistry, AsyncResult, AtomRef, Hydration } from "effect/unstable/reactivity"
+import { Atom, AtomRegistry, AsyncResult, AtomRef, Hydration } from "effect/reactivity"
 ```
 
 ## CRITICAL: AsyncResult vs effect/Result
@@ -70,7 +70,7 @@ runtime.fn(eff, { reactivityKeys: ["counter"] })   // auto-refresh on Reactivity
 ```
 
 - `runtime.atom` / `runtime.fn` give the inner Effect access to the layer's services `R`.
-- The layer is built once via a shared `MemoMap` (`Atom.defaultMemoMap`).
+- The layer is built once via a shared `MemoMap` (`Atom.runtime.memoMap`, one per registry; `Atom.context({ memoMap })` makes a factory with your own).
 - Replace a runtime's layer in tests:
 
 ```ts

@@ -1,10 +1,10 @@
 # Cluster
 
-`effect/unstable/cluster`. Entities are sharded, addressable, stateful actors backed by Rpc defs.
+`effect/cluster`. Entities are sharded, addressable, stateful actors backed by Rpc defs.
 
 - `Entity.make(name, [rpc...])` — entity = array of `Rpc` defs.
 - `.toLayer(handlers, { maxIdleTime })` — passivation: idle entity stopped, recreated on demand.
-- Client: `Entity.client` yields a `clientFor(id)` function; address by entity id.
+- Client: the entity's `client` property (`yield* Counter.client`) yields a `clientFor(id)` function; address by entity id.
 - `ClusterSchema.Persisted` annotation persists messages (default = volatile/network-only).
 
 DO use `TestRunner.layer` + `Layer.provideMerge` in tests (so tests can touch storage); `NodeClusterSocket.layer()` over a `SqlClient` layer in production.
@@ -14,8 +14,8 @@ DON'T assume messages persist — they're volatile unless annotated `ClusterSche
 ```ts
 import { NodeClusterSocket, NodeRuntime } from "@effect/platform-node"
 import { Effect, Layer, Ref, Schema } from "effect"
-import { ClusterSchema, Entity, TestRunner } from "effect/unstable/cluster"
-import { Rpc } from "effect/unstable/rpc"
+import { ClusterSchema, Entity, TestRunner } from "effect/cluster"
+import { Rpc } from "effect/rpc"
 
 const Increment = Rpc.make("Increment", { payload: { amount: Schema.Number }, success: Schema.Number })
 const GetCount  = Rpc.make("GetCount", { success: Schema.Number })

@@ -105,7 +105,7 @@ const NumberFromString = Schema.Number.pipe(
 ```
 
 - `Schema.decodeTo(to, {decode, encode})` / `Schema.encodeTo(to, {decode, encode})`: method-based transform to/from another schema.
-- `SchemaTransformation.transform({decode,encode})` and `.transformOrFail({decode,encode})` (returns Effect) live in the `SchemaTransformation` module.
+- `SchemaTransformation.transform({decode,encode})` and `SchemaTransformation.transformEffect({decode,encode})` (each returns an `Effect` failing with a `SchemaIssue.Issue`) live in the `SchemaTransformation` module.
 - `Schema.decode({decode,encode})`: identity-target transform on the same Type using `SchemaGetter.Getter`s.
 - DON'T: `Schema.transform(...)` / `Schema.transformOrFail(...)` at top level (v3, removed).
 
@@ -148,8 +148,9 @@ Schema.optionalKey(S)   // exact optional: key may be ABSENT (no `| undefined`)
 Schema.optional(S)      // = optionalKey(UndefinedOr(S)): absent OR `| undefined`
 Schema.mutableKey(S)    // fields are readonly by default; opt-in mutable
 Schema.NullOr(S)        // also UndefinedOr, NullishOr
-S.pipe(Schema.withDecodingDefault(() => v))   // default when key missing/undefined during DECODE
-S.pipe(Schema.withConstructorDefault(...))     // default for .make()
+S.pipe(Schema.withDecodingDefault(Effect.succeed(v)))     // default when key missing/undefined during DECODE
+S.pipe(Schema.withDecodingDefaultKey(Effect.succeed(v)))  // default when key missing; decoded key required
+S.pipe(Schema.withConstructorDefault(Effect.succeed(v)))  // default for .make()
 ```
 
 Option-valued fields (decode into `Option<T>` while wire form is `T | null`):
@@ -251,14 +252,14 @@ Attach via the relevant API's annotations arg or annotation calls: `{ message: (
 
 ## Tagged errors
 
-Schema-based errors use `Schema.TaggedErrorClass` (note the `Class` suffix — v3 used `Schema.TaggedError` without it). They mix in `Cause.YieldableError` so instances are `yield*`-able. Full error coverage lives in `../core/error-handling.md`.
+Schema-based errors use `Schema.TaggedError` (4.0.5 has no `TaggedErrorClass`; pre-release v4 builds did). They mix in `Cause.YieldableError` so instances are `yield*`-able. Full error coverage lives in `../core/error-handling.md`.
 
 ```ts
-export class UserNotFound extends Schema.TaggedErrorClass<UserNotFound>()(
+export class UserNotFound extends Schema.TaggedError<UserNotFound>()(
   "UserNotFound",
   {},
   { httpApiStatus: 404 }       // HTTP status is an ANNOTATION (3rd arg), not a field
 ) {}
 ```
 
-- DON'T: `Schema.TaggedError` / `Schema.TaggedClass(...)` for errors — error variants require the `Class` suffix and `(Tagged)ErrorClass` for yieldability. See `../core/error-handling.md`.
+- DON'T: `Schema.TaggedClass(...)` for errors — only `Schema.TaggedError` / `Schema.Error` are yieldable. See `../core/error-handling.md`.

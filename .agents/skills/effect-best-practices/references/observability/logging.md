@@ -24,8 +24,8 @@ const logCheckoutFlow = Effect.gen(function*() {
 ## Logger config
 
 - `Logger.layer([logger1, logger2], { mergeWithExisting? })` — installs loggers. Loggers can be `Effect<Logger>` (resourceful).
-- Built-ins: `Logger.consoleJson` (one JSON line/entry, prod), `Logger.consolePretty`, `Logger.defaultLogger`.
-- Formatters: `Logger.formatSimple`, `Logger.formatStructured`, `Logger.formatJson`, `Logger.formatPretty`.
+- Built-ins: `Logger.consoleJson` (one JSON line/entry, prod), `Logger.consolePretty()` (a function: `{ colors?, formatDate?, mode? }`), `Logger.defaultLogger`.
+- Formatters: `Logger.formatSimple`, `Logger.formatStructured`, `Logger.formatJson`, `Logger.formatLogFmt` (no `formatPretty`).
 - `Logger.toFile(format, path)` — needs a FileSystem layer (e.g. `NodeFileSystem.layer`).
 - `Logger.batched(format, { window, flush })` — batch + flush to external sink.
 

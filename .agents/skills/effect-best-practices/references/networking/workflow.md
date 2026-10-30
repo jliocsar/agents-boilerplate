@@ -1,6 +1,6 @@
 # Workflow
 
-`effect/unstable/workflow`. Durable, suspendable, idempotent execution.
+`effect/workflow`. Durable, suspendable, idempotent execution.
 
 `Workflow.make(name, { payload, idempotencyKey, success?, error?, suspendedRetrySchedule?, annotations? })`.
 - `idempotencyKey: (payload) => string` (pure, stable) → deterministic `executionId` (hash of name+key).
@@ -14,7 +14,7 @@ DON'T call `Activity.make` with a positional `(name, fn)` — that's the mdx bug
 
 ```ts
 import { Effect, Layer, Schema } from "effect"
-import { Activity, Workflow, WorkflowEngine } from "effect/unstable/workflow"
+import { Activity, Workflow, WorkflowEngine } from "effect/workflow"
 
 const ProcessOrder = Workflow.make("ProcessOrder", {
   payload: { orderId: Schema.String, items: Schema.Array(Schema.String) },
@@ -50,8 +50,8 @@ const reserveInventory = Activity.make({
 ```
 
 - Named, schema-backed, durable units; results persisted per attempt (keyed by name+attempt).
-- Retry: `Activity.retry(activity, schedulePolicy)` updates `Activity.CurrentAttempt` each attempt; `interruptRetryPolicy` controls retry-on-interrupt (exhaustion => die).
-- `Activity.raceAll(name, ...activities)` races multiple external operations.
+- Retry: `Activity.retry(activity, { times, while?, until? })` (`Effect.retry` options minus `schedule`) updates `Activity.CurrentAttempt` each attempt; `interruptRetryPolicy` controls retry-on-interrupt (exhaustion => die).
+- `Activity.raceAll(name, [activityA, activityB])` races multiple external operations.
 
 ## Compensation (saga) — `withCompensation`
 

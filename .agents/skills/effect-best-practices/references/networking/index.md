@@ -1,6 +1,6 @@
 # Networking
 
-Effect v4 networking and distributed pillars. All modules live under `effect/unstable/*`; platform impls from `@effect/platform-node`.
+Effect v4 networking and distributed pillars. All modules live under `effect/*`; platform impls from `@effect/platform-node`.
 
 - [HTTP Client](http-client.md): `HttpClient.HttpClient` service — bake base-url/headers/retry, decode bodies via Schema, `FetchHttpClient.layer`.
 - [HTTP API](http-api.md): declarative `HttpApi`/`HttpApiGroup`/`HttpApiEndpoint`, serving, typed client derivation, middleware, security.

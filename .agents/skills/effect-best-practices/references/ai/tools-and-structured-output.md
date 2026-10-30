@@ -7,7 +7,7 @@
 - DO add `.annotate({ description })` to schema fields used as params.
 
 ```ts
-import { Tool, Toolkit } from "effect/unstable/ai"
+import { Tool, Toolkit } from "effect/ai"
 import { Effect, Schema } from "effect"
 
 const SearchProducts = Tool.make("SearchProducts", {

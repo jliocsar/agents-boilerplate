@@ -2,13 +2,13 @@
 
 ## Defining errors
 
-- DO use `Schema.TaggedErrorClass<Self>()("Tag", { fields })` — the recommended way for schema-backed/serializable errors. Also `Schema.ErrorClass` (no tag).
-- `Data.TaggedError("Tag")<{...}>` and `Data.Error` also exist — produce `Cause.YieldableError`, work with `catchTag`/`catchTags`, and are yieldable in `Effect.gen` to fail the effect. The `_tag` is excluded from constructor args. Prefer `Schema.TaggedErrorClass` for serializable errors.
+- DO use `Schema.TaggedError<Self>()("Tag", { fields })` — the recommended way for schema-backed/serializable errors. Also `Schema.Error` (no tag).
+- `Data.TaggedError("Tag")<{...}>` and `Data.Error` also exist — produce `Cause.YieldableError`, work with `catchTag`/`catchTags`, and are yieldable in `Effect.gen` to fail the effect. The `_tag` is excluded from constructor args. Prefer `Schema.TaggedError` for serializable errors.
 - For defect/unknown causes inside an error schema, use `cause: Schema.Defect()` (it's a factory — bare `Schema.Defect` is not a schema).
 - DO include context fields (IDs, inputs) in error classes.
 
 ```ts
-class AiError extends Schema.TaggedErrorClass<AiError>()("AiError", {
+class AiError extends Schema.TaggedError<AiError>()("AiError", {
   reason: Schema.Union([RateLimitError, QuotaExceededError, SafetyBlockedError])
 }) {}
 ```
@@ -70,7 +70,7 @@ callModel.pipe(Effect.unwrapReason("AiError"), Effect.catchTags({ /* ... */ }))
 
 ## Other error-channel combinators
 
-- `Effect.mapError`, `Effect.tapError`, `Effect.orDie` (makes E fatal/defect), `Effect.orElse`.
+- `Effect.mapError`, `Effect.tapError`, `Effect.orDie` (makes E fatal/defect), `Effect.orElseSucceed`. There is no `Effect.orElse` in 4.0.5.
 
 ## Cause flattened to reasons
 

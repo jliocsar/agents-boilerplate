@@ -9,8 +9,8 @@ Platform service Tags live in CORE `effect`, NOT `@effect/platform`. Bun adapter
 - `Crypto` → `effect/Crypto`
 - `Terminal` → `effect/Terminal`
 - `Stdio` → `effect/Stdio`
-- `ChildProcessSpawner` → `effect/unstable/process/ChildProcessSpawner`
-- HTTP → `effect/unstable/http/*` (`HttpServer`, `HttpServerResponse`, `HttpClient`, `FetchHttpClient`, ...)
+- `ChildProcessSpawner` → `effect/process/ChildProcessSpawner`
+- HTTP → `effect/http/*` (`HttpServer`, `HttpServerResponse`, `HttpClient`, `FetchHttpClient`, ...)
 - Bun adapters → `@effect/platform-bun` (`BunRuntime`, `BunServices`, `BunHttpServer`, `BunFileSystem`, ...)
 
 - DON'T import `HttpServerResponse`/`Crypto`/`FileSystem` from `@effect/platform` — wrong package in v4.
@@ -88,7 +88,7 @@ Layer API:
 
 Options = `ServeOptions<R>` = Bun `Serve` options (port/hostname/unix/routes) plus optional `disablePreemptiveShutdown?` and `gracefulShutdownTimeout?: Duration.Input` (default graceful timeout = 20s).
 
-`HttpServer.serve` (from `effect/unstable/http/HttpServer`) turns a response Effect into a Layer requiring `HttpServer`:
+`HttpServer.serve` (from `effect/http/HttpServer`) turns a response Effect into a Layer requiring `HttpServer`:
 
 ```ts
 export const serve: {
@@ -103,10 +103,10 @@ Canonical Bun HTTP app:
 import { BunHttpServer, BunRuntime } from "@effect/platform-bun"
 import * as Effect from "effect/Effect"
 import * as Layer from "effect/Layer"
-import * as HttpServer from "effect/unstable/http/HttpServer"
-import * as HttpServerResponse from "effect/unstable/http/HttpServerResponse"
+import * as HttpServer from "effect/http/HttpServer"
+import * as HttpServerResponse from "effect/http/HttpServerResponse"
 
-const app = HttpServerResponse.text("Hello from Bun!")
+const app = Effect.succeed(HttpServerResponse.text("Hello from Bun!"))
 
 HttpServer.serve(app).pipe(
   Layer.provide(BunHttpServer.layer({ port: 3000 })),
@@ -117,7 +117,7 @@ HttpServer.serve(app).pipe(
 
 - DO use `BunHttpServer.layer({ port })` for apps; `layerTest`/`layer({ port: 0 })` for tests; `layerConfig` for config-driven ports.
 - `Bun.serve` has ONE active `fetch` handler; each `serve` reloads it and restores the previous handler when the serve scope finalizes.
-- WebSocket upgrade via `HttpServerRequest.upgrade` (calls `server.upgrade`); fails if not upgradeable; non-normal close codes map to `Socket` errors.
+- WebSocket upgrade via the request's `upgrade` property (`request.upgrade: Effect<Socket>`; calls `server.upgrade`); fails if not upgradeable; non-normal close codes map to `Socket` errors.
 - Server stopped with `server.stop()` on scope close; preemptive graceful shutdown unless `disablePreemptiveShutdown: true`.
 - DON'T acquire long-lived servers/subscriptions/worker loops outside a scope — breaks graceful shutdown on SIGINT/SIGTERM.
 
@@ -134,4 +134,4 @@ const read = Effect.gen(function*() {
 }).pipe(Effect.provide(BunFileSystem.layer))
 ```
 
-- Child processes: use the `ChildProcessSpawner` Tag (from `effect/unstable/process/ChildProcessSpawner`) backed by `BunChildProcessSpawner.layer` (in `BunServices.layer`). v4 has no separate `Command` re-export in platform-bun; spawning goes through `ChildProcessSpawner`.
+- Child processes: use the `ChildProcessSpawner` Tag (from `effect/process/ChildProcessSpawner`) backed by `BunChildProcessSpawner.layer` (in `BunServices.layer`). v4 has no separate `Command` re-export in platform-bun; spawning goes through `ChildProcessSpawner`.

@@ -1,6 +1,6 @@
 # LanguageModel
 
-Core lives in `effect/unstable/ai` (part of the `effect` package, not a separate package). Verified exports of `effect/unstable/ai`: `AiError, AnthropicStructuredOutput, Chat, EmbeddingModel, IdGenerator, LanguageModel, McpSchema, McpServer, Model, OpenAiStructuredOutput, Prompt, Response, ResponseIdTracker, Telemetry, Tokenizer, Tool, Toolkit`.
+Core lives in `effect/ai` (part of the `effect` package, not a separate package). Verified exports of `effect/ai`: `AiError, AnthropicStructuredOutput, Chat, Decision, DecisionModel, EmbeddingModel, IdGenerator, LanguageModel, McpProtocol, McpSchema, McpServer, Model, OpenAiStructuredOutput, Prompt, Response, ResponseIdTracker, Telemetry, Tokenizer, Tool, Toolkit`.
 
 - DO call the module-level functions `LanguageModel.generateText/generateObject/streamText`; they require `LanguageModel.LanguageModel` in context.
 - Method forms also valid: `const model = yield* LanguageModel.LanguageModel; model.generateText(...)`.
@@ -11,7 +11,7 @@ Core lives in `effect/unstable/ai` (part of the `effect` package, not a separate
 
 ```ts
 import { Effect } from "effect"
-import { LanguageModel, Model } from "effect/unstable/ai"
+import { LanguageModel, Model } from "effect/ai"
 
 const gen = Effect.gen(function*() {
   const model = yield* LanguageModel.LanguageModel
@@ -37,7 +37,7 @@ const gen = Effect.gen(function*() {
 
 ```ts
 import { Stream } from "effect"
-import { LanguageModel, type Response } from "effect/unstable/ai"
+import { LanguageModel, type Response } from "effect/ai"
 
 LanguageModel.streamText({ prompt: `...` }).pipe(
   Stream.filter((part): part is Response.TextDeltaPart => part.type === "text-delta"),
