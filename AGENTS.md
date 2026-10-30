@@ -127,6 +127,52 @@ Every member with source needs a `test` script. The gate runs
 reported.
 :::
 
+## Architecture
+
+:::warning
+Every outside system the program talks to — a directory tree, a remote API, a tool it spawns — is
+one `Context.Service`, and the module that talks to it is that service. Its `make` resolves the
+platform services and the `Config` it needs, once, so its methods carry no requirements and each
+environment variable is read in exactly one place. The skill's services reference has the shape.
+
+The alternative was tried on a sibling project: modules as free functions that `yield*` the file
+system, the process spawner, the HTTP client and config directly. Every requirement leaked into
+every signature that touched one, the home and XDG directories were re-read all over, and a test
+could only fake the transport. With a service, a test swaps one layer.
+:::
+
+Layers are composed at the edge, in one place, and provided nowhere below it. A CLI provides each
+subcommand's layers to that subcommand alone, so a command builds only what it uses and `--help`
+builds nothing.
+
+Commands never import each other. Logic two commands share moves to the module that owns the concept
+it is about: a command importing a command couples two entry points and hides where the logic lives.
+**Not enforced**: the boilerplate fixes no command directory. A project that does can ban sibling
+imports inside it with a `no-restricted-imports` override.
+
+A module owns its paths, and one table drives building, listing and loading a directory layout. A
+layout written twice, as a path builder and a separate listing, is two layouts that drift; a module
+that needs another's paths derives them from the owner instead of keeping a copy.
+
+:::warning
+Validate where data enters, and only there: a CLI argument through its schema, the environment
+through `Config.schema`, a file — including a value the program itself remembered on disk — through a
+Schema decode. Identifiers are branded, and a value that becomes a path segment or a URL host
+carries a check that rules out traversal and host injection, since a brand alone checks nothing. Both
+holes were found on a sibling project: a positional argument and a remembered value built a
+filesystem path and a URL unchecked, while a schema for exactly that already existed.
+Enforced in part: `node/no-process-env` rejects reading the environment around `Config`.
+
+A loader returns everything downstream needs, and nothing re-reads the source after the boundary.
+A second module re-reading files the loader already validated is a second decoder, and it drifts
+from the one that ran.
+
+Shape is fixed at the boundary too. Decode to the tagged form instead of converting a structural
+one later, give "none" one representation, and give paths relative to different roots different
+brands or field names, so no reader has to guess the root. A schema nothing decodes is a type in
+disguise; write the type. The skill's boundary reference has the code.
+:::
+
 ## Rules
 
 Leaf imports only: `effect/Effect`, `effect/unstable/cli/Command`.
@@ -276,6 +322,10 @@ Do not guess about Effect, oxc or Bun. Do not trust a plausible claim in a revie
    under the ignored directory). Probe it from a directory outside any ignored tree.
 3. Record it here — never as a comment; `no-comments` rejects one anyway.
 :::
+
+The `effect-docs` MCP server (`effect_docs_search`, `get_effect_doc`) serves v3-era guidance: its
+guide teaches `Effect.Service`, `.Default`, `catchAll` and `Context.Tag` (measured). Use it for
+principles only; API shapes come from the source.
 
 ## Pull requests
 

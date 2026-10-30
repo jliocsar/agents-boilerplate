@@ -9,7 +9,7 @@
   ],
 
   // Listing plugins explicitly is what turns off oxlint's unicorn/oxc defaults.
-  "plugins": ["typescript", "promise", "effecttsgo"],
+  "plugins": ["typescript", "promise", "effecttsgo", "node"],
 
   "categories": {
     "correctness": "error",
@@ -40,6 +40,10 @@
     ],
 
     "promise/prefer-await-to-then": "error",
+
+    // The environment is read through `Config`, once, in the `make` of the
+    // service that needs it.
+    "node/no-process-env": "error",
 
     "id-length": ["error", { "min": 2, "exceptions": ["i", "j"], "properties": "never" }],
 
