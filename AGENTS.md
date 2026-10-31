@@ -305,10 +305,8 @@ The ones with behaviour worth knowing before you trip on them:
   argument — the rule reads `options[0]` only — which oxlint validates against the rule's JSON
   `meta.schema` before the rule runs.
 - `no-tag-access` — no `x._tag`, `switch (x._tag)`, `const { _tag } = x`. Defining a tag is fine.
-- `no-shadowed-error-field` — no `name`/`stack` field on an error class. As of `begone-slop` 0.2.9
-  it matches only the factory names `TaggedErrorClass`/`ErrorClass`, which effect 4.0.5 does not
-  have, so it catches nothing here until it learns `TaggedError`/`Error` (measured). The doctrine
-  still holds; review catches it meanwhile.
+- `no-shadowed-error-field` — no `name`/`stack` field on a `Schema.TaggedError`/`Schema.Error` class.
+  Before `begone-slop` 0.2.10 it knew only the pre-rc factory names and caught nothing on effect 4.0.
 - `no-comments` and `require-safety-comment-for-type-assertion` are one doctrine in two rules: prose
   is banned everywhere except where an assertion demands it.
 
