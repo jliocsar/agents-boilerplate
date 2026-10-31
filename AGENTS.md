@@ -151,6 +151,13 @@ Layers are composed at the edge, in one place, and provided nowhere below it. A 
 subcommand's layers to that subcommand alone, so a command builds only what it uses and `--help`
 builds nothing.
 
+A service's own layer leaves what it depends on open, and only the edge wires services to each
+other. A dependency provided inside a layer stays the one it gets even when a test provides another
+around it (measured), so a layer that wires itself leaves a test nothing to fake but the outside
+world: a binary planted on disk, a patched `fetch`, an env var that exists only for tests. Effect's
+own janitor app keeps every layer open and wires once at the edge. The wiring is named stages with
+one `provide` each, since the lint rules reject a nested provide and a chain of them in one pipe.
+
 Commands never import each other. Logic two commands share moves to the module that owns the concept
 it is about: a command importing a command couples two entry points and hides where the logic lives.
 **Not enforced**: the boilerplate fixes no command directory. A project that does can ban sibling
