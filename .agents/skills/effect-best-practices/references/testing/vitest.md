@@ -26,10 +26,9 @@ import { assert, describe, it } from "@effect/vitest"
 import { afterAll, assert, describe, expect, it, layer } from "@effect/vitest"
 import * as Effect from "effect/Effect"
 import * as TestClock from "effect/testing/TestClock"
-import { TestClock } from "effect/testing"
 ```
 
-Both `effect/testing/TestClock` and `{ TestClock } from "effect/testing"` are valid.
+Import the leaf module (`effect/testing/TestClock`), never the `effect/testing` barrel.
 
 ## it.effect + TestClock
 
@@ -62,8 +61,13 @@ describe("TestClock", () => {
 
 ```ts
 import { afterAll, expect, it, layer } from "@effect/vitest"
-import { Clock, Context, Duration, Effect, Fiber, Layer } from "effect"
-import { TestClock } from "effect/testing"
+import * as Clock from "effect/Clock"
+import * as Context from "effect/Context"
+import * as Duration from "effect/Duration"
+import * as Effect from "effect/Effect"
+import * as Fiber from "effect/Fiber"
+import * as Layer from "effect/Layer"
+import * as TestClock from "effect/testing/TestClock"
 
 class Foo extends Context.Service<Foo, "foo">()("Foo") {
   static Live = Layer.succeed(Foo)("foo")

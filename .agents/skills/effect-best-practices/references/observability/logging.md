@@ -8,7 +8,7 @@ Structured logging via the Effect logger. All `Effect.log*` are `(...message: Re
 - Pass structured metadata inline as a trailing object: `Effect.logInfo("starting checkout", { orderId })`.
 
 ```ts
-import { Effect } from "effect"
+import * as Effect from "effect/Effect"
 
 const logCheckoutFlow = Effect.gen(function*() {
   yield* Effect.logDebug("loading checkout state")
@@ -30,7 +30,7 @@ const logCheckoutFlow = Effect.gen(function*() {
 - `Logger.batched(format, { window, flush })` — batch + flush to external sink.
 
 ```ts
-import { Logger } from "effect"
+import * as Logger from "effect/Logger"
 
 const JsonLoggerLayer = Logger.layer([Logger.consoleJson])
 const FileLoggerLayer = Logger.layer([Logger.toFile(Logger.formatSimple, "app.log")])
@@ -42,7 +42,8 @@ const FileLoggerLayer = Logger.layer([Logger.toFile(Logger.formatSimple, "app.lo
 v4 uses `References.MinimumLogLevel` as a Layer ref. Levels are plain strings (`"Warn"`, `"Info"`, `"Debug"`, ...).
 
 ```ts
-import { Layer, References } from "effect"
+import * as Layer from "effect/Layer"
+import * as References from "effect/References"
 
 const WarnAndAbove = Layer.succeed(References.MinimumLogLevel, "Warn")
 ```

@@ -1,14 +1,15 @@
 # Schema
 
-`Schema` lives at the TOP level. Import it from `effect` directly.
+`Schema` lives at the TOP level: `effect/Schema`.
 
 ```ts
-import { Schema } from "effect"
+import * as Schema from "effect/Schema"
 // transforms also pull from:
-import { SchemaGetter, SchemaTransformation } from "effect"
+import * as SchemaGetter from "effect/SchemaGetter"
+import * as SchemaTransformation from "effect/SchemaTransformation"
 ```
 
-- DO: `import { Schema } from "effect"`. It is NOT under `unstable/`.
+- DO: `import * as Schema from "effect/Schema"` — a leaf import; the `effect` root barrel is banned.
 - DON'T: trust v3 idioms (`Schema.filter`, `Schema.minLength`, `Schema.transform`, `Schema.Record({key,value})`, `decodeEither`) — all changed in v4. The whole module was rewritten.
 
 ## Struct, Class, TaggedClass
@@ -89,7 +90,9 @@ Schema.Int.check(Schema.isBetween({ minimum: 5, maximum: 10 }))
 NO top-level `Schema.transform` / `Schema.transformOrFail` in v4. Transformations are applied as methods using `SchemaTransformation` (prebuilt) or `SchemaGetter` getters.
 
 ```ts
-import { Schema, SchemaGetter, SchemaTransformation } from "effect"
+import * as Schema from "effect/Schema"
+import * as SchemaGetter from "effect/SchemaGetter"
+import * as SchemaTransformation from "effect/SchemaTransformation"
 
 // prebuilt transformation
 const Up = Schema.String.decode(SchemaTransformation.toUpperCase())

@@ -29,8 +29,9 @@ const modelLayer = yield* OpenAiLanguageModel.model("gpt-4.1").captureRequiremen
 ```ts
 import { AnthropicClient, AnthropicLanguageModel } from "@effect/ai-anthropic"
 import { OpenAiClient, OpenAiLanguageModel } from "@effect/ai-openai"
-import { Config, Layer } from "effect"
-import { FetchHttpClient } from "effect/http"
+import * as Config from "effect/Config"
+import * as Layer from "effect/Layer"
+import * as FetchHttpClient from "effect/http/FetchHttpClient"
 
 const AnthropicClientLayer = AnthropicClient.layerConfig({
   apiKey: Config.Redacted("ANTHROPIC_API_KEY")
@@ -51,7 +52,7 @@ Signatures:
 ## ExecutionPlan — multi-provider fallback
 
 ```ts
-import { ExecutionPlan } from "effect"
+import * as ExecutionPlan from "effect/ExecutionPlan"
 
 const DraftPlan = ExecutionPlan.make(
   { provide: OpenAiLanguageModel.model("gpt-5.2"), attempts: 3 },

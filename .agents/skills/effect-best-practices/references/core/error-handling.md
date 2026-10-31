@@ -56,7 +56,7 @@ For a tagged error whose payload has a `reason: Schema.Union([...])` field:
 // Handle one reason (+ optional catch-all for other reasons):
 Effect.catchReason("AiError", "RateLimitError",
   (reason) => Effect.succeed(`Retry after ${reason.retryAfter}s`),
-  (reason) => Effect.succeed(`Failed: ${reason._tag}`))
+  (reason) => Effect.succeed(`Failed: ${reason.message}`))
 
 // Handle several reasons:
 Effect.catchReasons("AiError", {

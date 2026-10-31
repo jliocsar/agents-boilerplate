@@ -18,9 +18,11 @@ DON'T provide `FetchHttpClient.layer` at call site if the service layer already 
 DON'T forget the `RateLimiter` layer + a store when using `withRateLimiter`, and account for the added `RateLimiterError` in the error channel.
 
 ```ts
-import { Effect, Layer } from "effect"
-import { FetchHttpClient, HttpClient } from "effect/http"
-import { RateLimiter } from "effect/persistence"
+import * as Effect from "effect/Effect"
+import * as Layer from "effect/Layer"
+import * as FetchHttpClient from "effect/http/FetchHttpClient"
+import * as HttpClient from "effect/http/HttpClient"
+import * as RateLimiter from "effect/persistence/RateLimiter"
 
 const paced = Effect.gen(function*() {
   const limiter = yield* RateLimiter.RateLimiter
@@ -36,8 +38,16 @@ const paced = Effect.gen(function*() {
 ```
 
 ```ts
-import { Context, Effect, flow, Layer, Schedule, Schema } from "effect"
-import { FetchHttpClient, HttpClient, HttpClientRequest, HttpClientResponse } from "effect/http"
+import * as Context from "effect/Context"
+import * as Effect from "effect/Effect"
+import { flow } from "effect/Function"
+import * as Layer from "effect/Layer"
+import * as Schedule from "effect/Schedule"
+import * as Schema from "effect/Schema"
+import * as FetchHttpClient from "effect/http/FetchHttpClient"
+import * as HttpClient from "effect/http/HttpClient"
+import * as HttpClientRequest from "effect/http/HttpClientRequest"
+import * as HttpClientResponse from "effect/http/HttpClientResponse"
 
 class Todo extends Schema.Class<Todo>("Todo")({
   userId: Schema.Number, id: Schema.Number, title: Schema.String, completed: Schema.Boolean

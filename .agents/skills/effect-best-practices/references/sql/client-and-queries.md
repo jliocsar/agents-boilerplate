@@ -3,11 +3,17 @@
 ## Imports
 
 ```ts
-import { SqlClient, SqlSchema, SqlResolver, SqlModel, Statement, Migrator, SqlError, SqlStream, SqlConnection }
-  from "effect/sql"
 import * as SqlClient from "effect/sql/SqlClient"
+import * as SqlSchema from "effect/sql/SqlSchema"
+import * as SqlResolver from "effect/sql/SqlResolver"
+import * as SqlModel from "effect/sql/SqlModel"
+import * as Statement from "effect/sql/Statement"
+import * as Migrator from "effect/sql/Migrator"
+import * as SqlError from "effect/sql/SqlError"
+import * as SqlStream from "effect/sql/SqlStream"
+import * as SqlConnection from "effect/sql/SqlConnection"
 
-import { Model } from "effect/schema"
+import * as Model from "effect/schema/Model"
 
 import { PgClient, PgMigrator } from "@effect/sql-pg"
 import { SqliteClient, SqliteMigrator } from "@effect/sql-sqlite-bun"
@@ -16,7 +22,7 @@ import { MysqlClient } from "@effect/sql-mysql2"
 ```
 
 - DO get the client via the service tag: `const sql = yield* SqlClient.SqlClient`.
-- DON'T write `import * as Sql from "effect/sql"` then `Sql.SqlClient` — `SqlClient` is itself a namespace; the tag is `SqlClient.SqlClient`.
+- DON'T import the `effect/sql` barrel — house rules ban it. Import each leaf module; `SqlClient` is itself a namespace, so the tag is `SqlClient.SqlClient`.
 
 ## Building a SqlClient layer
 
@@ -32,7 +38,10 @@ Every driver `layer(config)` returns `Layer.Layer<DriverClient | SqlClient.SqlCl
 
 ```ts
 import { PgClient } from "@effect/sql-pg"
-import { Config, Duration, Redacted, String } from "effect"
+import * as Config from "effect/Config"
+import * as Duration from "effect/Duration"
+import * as Redacted from "effect/Redacted"
+import * as Str from "effect/String"
 
 const PgLive = PgClient.layer({
   host: "localhost", port: 5432, database: "mydb",
@@ -44,8 +53,8 @@ const PgLive = PgClient.layer({
   idleTimeout: Duration.seconds(30),
   connectTimeout: Duration.seconds(5),
   applicationName: "my-app",
-  transformResultNames: String.snakeToCamel,
-  transformQueryNames: String.camelToSnake
+  transformResultNames: Str.snakeToCamel,
+  transformQueryNames: Str.camelToSnake
 })
 
 const PgFromEnv = PgClient.layerConfig({
@@ -172,15 +181,15 @@ const transfer = (from: number, to: number, amount: number) =>
 Reason tags (each a `Schema.TaggedError`, carrying `cause`, `message`, `operation`): `ConnectionError` (retryable), `AuthenticationError`, `AuthorizationError`, `SqlSyntaxError`, `UniqueViolation` (+ `constraint`), `ConstraintError`, `DeadlockError` (retryable), `SerializationError` (retryable), `LockTimeoutError` (retryable), `StatementTimeoutError` (retryable), `UnknownError`. Also `ResultLengthMismatch` (resolver) with `expected`/`actual`.
 
 ```ts
+class DuplicateUser extends Schema.TaggedError<DuplicateUser>()("DuplicateUser", { constraint: Schema.String }) {}
+
 program.pipe(
-  Effect.catchTag("SqlError", (e) => {
-    if (e.reason._tag === "UniqueViolation") return Effect.fail({ _tag: "Duplicate" as const })
-    return Effect.fail(e)
-  })
+  Effect.catchReason("SqlError", "UniqueViolation", (reason) =>
+    Effect.fail(new DuplicateUser({ constraint: reason.constraint })))
 )
 
 program.pipe(Effect.retry({ while: (e) => SqlError.isSqlError(e) && e.isRetryable }))
 ```
 
-- DO branch on `error.reason._tag` (structured) — don't string-match `error.message`.
+- DO branch on the reason with `Effect.catchReason` / `catchReasons` / `unwrapReason` + `catchTags` — never read `error.reason._tag`, and don't string-match `error.message`.
 - pg classifies by SQLSTATE code: `23505`->UniqueViolation, `40P01`->Deadlock, `40001`->Serialization, `57014`->StatementTimeout, `08*`->Connection.

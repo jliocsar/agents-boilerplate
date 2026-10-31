@@ -38,7 +38,8 @@ export const runMain: {
 Canonical pattern:
 
 ```ts
-import { BunRuntime, BunServices } from "@effect/platform-bun"
+import * as BunRuntime from "@effect/platform-bun/BunRuntime"
+import * as BunServices from "@effect/platform-bun/BunServices"
 import * as Effect from "effect/Effect"
 
 program.pipe(
@@ -100,7 +101,8 @@ export const serve: {
 Canonical Bun HTTP app:
 
 ```ts
-import { BunHttpServer, BunRuntime } from "@effect/platform-bun"
+import * as BunHttpServer from "@effect/platform-bun/BunHttpServer"
+import * as BunRuntime from "@effect/platform-bun/BunRuntime"
 import * as Effect from "effect/Effect"
 import * as Layer from "effect/Layer"
 import * as HttpServer from "effect/http/HttpServer"
@@ -124,7 +126,7 @@ HttpServer.serve(app).pipe(
 ## FileSystem / Path / Command usage
 
 ```ts
-import { BunFileSystem } from "@effect/platform-bun"
+import * as BunFileSystem from "@effect/platform-bun/BunFileSystem"
 import * as FileSystem from "effect/FileSystem"
 import * as Effect from "effect/Effect"
 

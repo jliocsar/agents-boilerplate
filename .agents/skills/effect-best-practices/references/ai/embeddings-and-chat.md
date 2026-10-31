@@ -5,9 +5,9 @@
 Core: `EmbeddingModel.EmbeddingModel` service with `embed(input: string)` → `EmbedResponse { vector }` and `embedMany(inputs: string[])` → `EmbedManyResponse { embeddings, usage }`. Also `EmbeddingModel.Dimensions` service (number).
 
 ```ts
-import { EmbeddingModel } from "effect/ai"
+import * as EmbeddingModel from "effect/ai/EmbeddingModel"
 import { OpenAiEmbeddingModel } from "@effect/ai-openai"
-import { Effect } from "effect"
+import * as Effect from "effect/Effect"
 
 const embedLayer = OpenAiEmbeddingModel.model("text-embedding-3-small", {
   dimensions: 1536
@@ -32,8 +32,10 @@ Constructors: `Chat.empty: Effect<Chat>`, `Chat.fromPrompt(prompt: Prompt.RawInp
 History is kept in `session.history: Ref<Prompt.Prompt>`. Each turn appends automatically.
 
 ```ts
-import { Chat, Prompt } from "effect/ai"
-import { Effect, Ref } from "effect"
+import * as Chat from "effect/ai/Chat"
+import * as Prompt from "effect/ai/Prompt"
+import * as Effect from "effect/Effect"
+import * as Ref from "effect/Ref"
 
 const session = yield* Chat.fromPrompt(
   Prompt.empty.pipe(Prompt.setSystem("You are a helpful assistant."))
@@ -103,5 +105,5 @@ Effect.catchTag(
 )
 ```
 
-- Branch on `error.reason._tag` (e.g. `"RateLimitError"`); use `error.retryAfter` / `error.isRetryable`.
+- Branch on the reason with `Effect.catchReason("AiError", "RateLimitError", …)` / `Effect.catchReasons`, or `Match.value(error.reason).pipe(Match.tagsExhaustive({…}))`; use `error.retryAfter` / `error.isRetryable`. Never read `error.reason._tag` — `_` means private.
 - Guards: `AiError.isAiError`, `AiError.isAiErrorReason`. `Effect.catchReason` is supported for reason-based handling.

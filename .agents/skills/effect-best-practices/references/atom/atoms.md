@@ -3,7 +3,11 @@
 Core `Atom` module lives in **`effect/reactivity`** — NOT a separate `@effect/atom` core package.
 
 ```ts
-import { Atom, AtomRegistry, AsyncResult, AtomRef, Hydration } from "effect/reactivity"
+import * as Atom from "effect/reactivity/Atom"
+import * as AtomRegistry from "effect/reactivity/AtomRegistry"
+import * as AsyncResult from "effect/reactivity/AsyncResult"
+import * as AtomRef from "effect/reactivity/AtomRef"
+import * as Hydration from "effect/reactivity/Hydration"
 ```
 
 ## CRITICAL: AsyncResult vs effect/Result

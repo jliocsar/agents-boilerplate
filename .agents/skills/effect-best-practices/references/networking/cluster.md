@@ -13,9 +13,14 @@ DON'T assume messages persist — they're volatile unless annotated `ClusterSche
 
 ```ts
 import { NodeClusterSocket, NodeRuntime } from "@effect/platform-node"
-import { Effect, Layer, Ref, Schema } from "effect"
-import { ClusterSchema, Entity, TestRunner } from "effect/cluster"
-import { Rpc } from "effect/rpc"
+import * as Effect from "effect/Effect"
+import * as Layer from "effect/Layer"
+import * as Ref from "effect/Ref"
+import * as Schema from "effect/Schema"
+import * as ClusterSchema from "effect/cluster/ClusterSchema"
+import * as Entity from "effect/cluster/Entity"
+import * as TestRunner from "effect/cluster/TestRunner"
+import * as Rpc from "effect/rpc/Rpc"
 
 const Increment = Rpc.make("Increment", { payload: { amount: Schema.Number }, success: Schema.Number })
 const GetCount  = Rpc.make("GetCount", { success: Schema.Number })

@@ -17,6 +17,7 @@ Start at `references/index.md` and navigate to the relevant pillar. Each folder'
 
 | Topic | DO | DON'T |
 | --- | --- | --- |
+| Imports | leaf modules: `effect/Effect`, `effect/cli/Command` | barrels: `from "effect"`, `effect/testing`, `effect/http` |
 | Authoring | `Effect.gen` + `Effect.fn("name")`, attach combinators via `.pipe` | functions returning `Effect.gen`; `.pipe` on `Effect.fn` |
 | Failing in gen | `return yield* new SomeError(...)` | bare `yield*` of an error mid-block |
 | Services | `Context.Service<X>()("id", { make })` + hand-written `static layer` | `Effect.Service` (gone); assuming `.Default` |
@@ -24,6 +25,7 @@ Start at `references/index.md` and navigate to the relevant pillar. Each folder'
 | Layers | `mergeAll` (independent), `provide` (hide dep), `provideMerge` (expose) | deep `Layer.provide` chains |
 | Errors | `Schema.TaggedError<Self>()("Tag", {...})`, one per failure reason | `Schema.TaggedErrorClass` (not in 4.0.5); generic shared errors |
 | Catch | `Effect.catch` / `catchTag` / `catchTags` / `catchCause` | `catchAll` / `catchSome` (renamed) |
+| Tags | `catchTag` / `catchReason` / `Match.tag` / `Match.tagsExhaustive` | reading `x._tag` or `error.reason._tag` |
 | Result type | `Result` (yieldable) | `Either` (gone) |
 | Schema filters | `.check(Schema.isMinLength(n))` | `Schema.minLength(n)` (gone) |
 | IDs / domain | brand ids (`Schema.brand`); `Option<T>` for absence | plain `string` ids; `null`/`undefined` |
@@ -40,12 +42,19 @@ Start at `references/index.md` and navigate to the relevant pillar. Each folder'
 Service with traced methods and a hand-wired layer:
 
 ```ts
-import { Context, Effect, Layer, Option, Schema } from "effect"
+import * as Context from "effect/Context"
+import * as Effect from "effect/Effect"
+import * as Layer from "effect/Layer"
+import * as Option from "effect/Option"
+import * as Schema from "effect/Schema"
 
 export class UserNotFound extends Schema.TaggedError<UserNotFound>()("UserNotFound", {
-  userId: UserId,
-  message: Schema.String
-}) {}
+  userId: UserId
+}) {
+  override get message(): string {
+    return `No user has id ${this.userId}.`
+  }
+}
 
 export class UserService extends Context.Service<UserService>()("app/UserService", {
   make: Effect.gen(function*() {
@@ -54,7 +63,7 @@ export class UserService extends Context.Service<UserService>()("app/UserService
     const findById = Effect.fn("UserService.findById")(function*(id: UserId) {
       const user = yield* repo.findById(id)
       return yield* Option.match(user, {
-        onNone: () => new UserNotFound({ userId: id, message: "not found" }),
+        onNone: () => new UserNotFound({ userId: id }),
         onSome: Effect.succeed
       })
     })
@@ -69,8 +78,8 @@ export class UserService extends Context.Service<UserService>()("app/UserService
 App entrypoint (Bun):
 
 ```ts
-import { BunRuntime } from "@effect/platform-bun"
-import { Effect, Layer } from "effect"
+import * as BunRuntime from "@effect/platform-bun/BunRuntime"
+import * as Effect from "effect/Effect"
 
 program.pipe(Effect.provide(MainLayer), BunRuntime.runMain)
 ```

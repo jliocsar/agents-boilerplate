@@ -10,8 +10,10 @@ DON'T pass a group name to `RpcGroup.make` and DON'T use `failure:` — both are
 ## Define + group + handlers
 
 ```ts
-import { Effect, Schema } from "effect"
-import { Rpc, RpcGroup } from "effect/rpc"
+import * as Effect from "effect/Effect"
+import * as Schema from "effect/Schema"
+import * as Rpc from "effect/rpc/Rpc"
+import * as RpcGroup from "effect/rpc/RpcGroup"
 
 class User extends Schema.Class<User>("User")({ id: Schema.Number, name: Schema.String }) {}
 class UserNotFound extends Schema.TaggedError<UserNotFound>()("UserNotFound", { userId: Schema.Number }) {}

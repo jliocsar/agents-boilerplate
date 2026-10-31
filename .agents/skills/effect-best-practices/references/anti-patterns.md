@@ -38,6 +38,13 @@ Forbidden patterns and v3 holdovers. Each is wrong in Effect v4; the fix follows
 - DON'T `Layer.merge` when you need a dependency satisfied → `provide` (hide) or `provideMerge` (expose).
 - DON'T leave finalizers/release effects fallible → release must be infallible (`Effect.sync` or fully handled).
 
+## House rules
+
+- DON'T import a barrel — the `effect` root, `effect/testing`, or any `effect/<pillar>` index → import the leaf module: `import * as Effect from "effect/Effect"`, `import * as HttpClient from "effect/http/HttpClient"`. Type-only imports are exempt.
+- DON'T read `_tag` (`x._tag`, `switch (x._tag)`, `const { _tag } = x`, `error.reason._tag`) → `Effect.catchTag`/`catchTags`, `Effect.catchReason`/`catchReasons`/`unwrapReason`, `Match.tag`/`Match.tagsExhaustive`, or a library guard (`Exit.isFailure`, `Cause.isTimeoutError`). Defining a tag is fine.
+- DON'T loosen a catch that refuses to typecheck (`Predicate.hasProperty(error, "_tag")`, a widening cast, catch-all then re-narrow) → the error union is missing a case; add it as a tagged error where the error is produced.
+- DON'T leave an error without a message → give the class a `message` getter: a full sentence that names the fix where possible. One reporter prints `error.message`; an error without one exits silently.
+
 ## Domain modeling anti-patterns
 
 - DON'T use `null`/`undefined` in domain types → model absence with `Option<T>` (`Schema.OptionFromNullOr` at boundaries).

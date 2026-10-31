@@ -10,8 +10,9 @@ Core lives in `effect/ai` (part of the `effect` package, not a separate package)
 ## generateText
 
 ```ts
-import { Effect } from "effect"
-import { LanguageModel, Model } from "effect/ai"
+import * as Effect from "effect/Effect"
+import * as LanguageModel from "effect/ai/LanguageModel"
+import * as Model from "effect/ai/Model"
 
 const gen = Effect.gen(function*() {
   const model = yield* LanguageModel.LanguageModel
@@ -36,8 +37,9 @@ const gen = Effect.gen(function*() {
 - Part `type` discriminants: `"text"`, `"text-delta"`, `"reasoning"`, `"tool-call"`, `"tool-result"`, `"finish"`. Stream parts use the delta variants.
 
 ```ts
-import { Stream } from "effect"
-import { LanguageModel, type Response } from "effect/ai"
+import * as Stream from "effect/Stream"
+import * as LanguageModel from "effect/ai/LanguageModel"
+import type * as Response from "effect/ai/Response"
 
 LanguageModel.streamText({ prompt: `...` }).pipe(
   Stream.filter((part): part is Response.TextDeltaPart => part.type === "text-delta"),

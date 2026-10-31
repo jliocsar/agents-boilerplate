@@ -13,8 +13,12 @@ DON'T use `WorkflowEngine.layerMemory` in production (in-memory, lost on restart
 DON'T call `Activity.make` with a positional `(name, fn)` — that's the mdx bug; pass an options object.
 
 ```ts
-import { Effect, Layer, Schema } from "effect"
-import { Activity, Workflow, WorkflowEngine } from "effect/workflow"
+import * as Effect from "effect/Effect"
+import * as Layer from "effect/Layer"
+import * as Schema from "effect/Schema"
+import * as Activity from "effect/workflow/Activity"
+import * as Workflow from "effect/workflow/Workflow"
+import * as WorkflowEngine from "effect/workflow/WorkflowEngine"
 
 const ProcessOrder = Workflow.make("ProcessOrder", {
   payload: { orderId: Schema.String, items: Schema.Array(Schema.String) },

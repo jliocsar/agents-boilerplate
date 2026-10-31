@@ -13,8 +13,12 @@ DON'T forget GET `payload` maps to the query string while POST `payload` maps to
 ## Define API
 
 ```ts
-import { Schema } from "effect"
-import { HttpApiEndpoint, HttpApiError, HttpApiGroup, HttpApiSchema, OpenApi } from "effect/http-api"
+import * as Schema from "effect/Schema"
+import * as HttpApiEndpoint from "effect/http-api/HttpApiEndpoint"
+import * as HttpApiError from "effect/http-api/HttpApiError"
+import * as HttpApiGroup from "effect/http-api/HttpApiGroup"
+import * as HttpApiSchema from "effect/http-api/HttpApiSchema"
+import * as OpenApi from "effect/http-api/OpenApi"
 
 export class UsersApiGroup extends HttpApiGroup.make("users")
   .add(
@@ -64,8 +68,10 @@ error: UserNotFound.pipe(HttpApiSchema.status(404))
 ## Handlers — `HttpApiBuilder.group(Api, name, build)`
 
 ```ts
-import { Effect, Layer } from "effect"
-import { HttpApiBuilder, HttpApiError } from "effect/http-api"
+import * as Effect from "effect/Effect"
+import * as Layer from "effect/Layer"
+import * as HttpApiBuilder from "effect/http-api/HttpApiBuilder"
+import * as HttpApiError from "effect/http-api/HttpApiError"
 
 export const UsersApiHandlers = HttpApiBuilder.group(
   Api, "users",
@@ -105,8 +111,15 @@ Security-scheme impl: `Layer.succeed(Auth)({ apiKey: (effect, { credential }) =>
 
 ```ts
 import { NodeHttpServer, NodeRuntime } from "@effect/platform-node"
-import { HttpRouter, HttpServer, FetchHttpClient, HttpClient, HttpClientRequest } from "effect/http"
-import { HttpApiBuilder, HttpApiClient, HttpApiMiddleware, HttpApiScalar } from "effect/http-api"
+import * as HttpRouter from "effect/http/HttpRouter"
+import * as HttpServer from "effect/http/HttpServer"
+import * as FetchHttpClient from "effect/http/FetchHttpClient"
+import * as HttpClient from "effect/http/HttpClient"
+import * as HttpClientRequest from "effect/http/HttpClientRequest"
+import * as HttpApiBuilder from "effect/http-api/HttpApiBuilder"
+import * as HttpApiClient from "effect/http-api/HttpApiClient"
+import * as HttpApiMiddleware from "effect/http-api/HttpApiMiddleware"
+import * as HttpApiScalar from "effect/http-api/HttpApiScalar"
 import { createServer } from "node:http"
 
 const ApiRoutes = HttpApiBuilder.layer(Api, { openapiPath: "/openapi.json" }).pipe(
