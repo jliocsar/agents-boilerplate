@@ -30,8 +30,9 @@ config as a nested one and died registering the house plugin twice, while the fl
 files to the root's `.claude` ignore and linted nothing (both measured).
 :::
 
-The `effecttsgo/*` Effect rules come from two `@effect/tsgo` presets that `.oxlintrc.json` extends:
-`recommended` (96 rules) and `effect-native` (26), which bans the globals Effect replaces —
+The `effecttsgo/*` Effect rules come from four `@effect/tsgo` presets that `.oxlintrc.json` extends:
+`recommended` (97 rules), `correctness` and `antipattern`, which add four rules `recommended` leaves
+off, and `effect-native` (26), which bans the globals Effect replaces —
 `process.env`, the global `console`, `Date`, `fetch`, timers, `new Promise`. `recommended` carried
 those itself until tsgo moved them out, so a bump that only follows `recommended` silently drops
 them (measured going from 0.36.1 to 0.64.1). They are type-aware, and the presets turn type-aware
@@ -39,7 +40,9 @@ mode on — which is why no `--type-aware` flag appears in the scripts.
 
 The few tsgo rules that are off say why beside themselves in `.oxlintrc.json`. Two are off because
 their quickfixes write what begone-slop rejects: a map to `undefined` becomes `Effect.asVoid`, and a
-catch returning `Effect.void` becomes a log-less `Effect.ignore`.
+catch returning `Effect.void` becomes a log-less `Effect.ignore`. `unnecessary-effect-gen` stays on,
+but don't take its fix for a body with no return and a non-void success: it writes `Effect.asVoid`
+too (read in tsgo 0.67.4's source, not run).
 
 oxlint's `promise` rules decide whether `x.catch(…)` is a Promise call by looking at the receiver,
 and they treat a namespace import as one that might be a Promise. So `Effect.catch` and

@@ -6,6 +6,8 @@
   "extends": [
     "./node_modules/@effect/tsgo/oxlint-presets/recommended.json",
     "./node_modules/@effect/tsgo/oxlint-presets/effect-native.json",
+    "./node_modules/@effect/tsgo/oxlint-presets/correctness.json",
+    "./node_modules/@effect/tsgo/oxlint-presets/antipattern.json",
     "./node_modules/@jliocsar/begone-slop/preset.json"
   ],
 
