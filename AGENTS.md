@@ -66,17 +66,31 @@ one is a module the graph did not ask for.
 :::warning
 `prepare` runs `effect-tsgo patch --oxlint`, which patches the oxlint and TypeScript binaries in
 `node_modules`. Without it the Effect rules do not run. It is not optional and it re-runs on every
-install — do not "simplify" `prepare` down to `husky`.
+install — do not "simplify" `prepare` down to the git config line.
 
 It also validates that `oxlint`, `oxlint-tsgolint` and `@effect/tsgo` are a supported triple, so
 bump the three together. tsgo 0.58 added `effect-tsgo oxlint` and `effect-tsgo tsc`, which run
 patched binaries without touching `node_modules`; this repo still patches, since editors and plain
 `tsc` launch the stock binaries.
 
-Any reinstall reverts the patch, and `prepare` then refuses to redo it because its backups still
-exist — `Unknown plugin: 'effecttsgo'` is what that looks like. Run `bunx effect-tsgo unpatch
---oxlint` first, then `bun run prepare` (measured, twice).
+A reinstall reverts the patch and `prepare` redoes it: lint still ran the Effect rules after `bun
+install --force` (measured on tsgo 0.67.4). A toolchain bump still unpatches first, with `bunx
+effect-tsgo unpatch --oxlint`, since that restores the old build's binaries. `Unknown plugin:
+'effecttsgo'` is what a missing patch looks like.
 :::
+
+The git hooks are plain scripts in `.githooks`, and `prepare` points `core.hooksPath` at them. Husky
+did nothing else we used. Formatting, lint on staged files and the typecheck run on commit; the whole
+repo's lint, the format check and the tests run on push, so a commit stays quick. A Claude Code hook
+refuses the Bash commands that skip them. It drops quoted text first, so a commit message mentioning
+a flag passes.
+
+Installs wait three days for a new release, the value Effect's cafe repo uses, set in `bunfig.toml`.
+A version an exact pin asks for fails too, and a young optional package is skipped with no error: the
+exclude list had to name tsgo's and oxlint-tsgolint's platform binaries, or they silently went
+missing, and it takes no globs (all measured on Bun 1.4.4). A lockfile's entries aren't re-checked, so
+there's no exclude list: a bump you mean to make runs `bun install --minimum-release-age 0` once, and
+every later install reads the lockfile (measured).
 
 :::warning
 `typescript`, `oxlint`, `oxlint-tsgolint` AND `@effect/tsgo` itself are pinned EXACTLY (no `^`).
