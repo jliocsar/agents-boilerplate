@@ -42,11 +42,19 @@ The few tsgo rules that are off say why beside themselves in `.oxlintrc.json`. T
 their quickfixes write what begone-slop rejects: a map to `undefined` becomes `Effect.asVoid`, and a
 catch returning `Effect.void` becomes a log-less `Effect.ignore`. `unnecessary-effect-gen` stays on,
 but don't take its fix for a body with no return and a non-void success: it writes `Effect.asVoid`
-too (read in tsgo 0.67.4's source, not run).
+too (read in tsgo 0.67.4's source). `oxlint --fix` left a probe of that shape unchanged, so it's the
+editor's quickfix to watch.
+
+`unstable-api-usage` stays on, and the language-service plugin block in `packages/tsconfig/base.json`
+allow-lists the `@stability unstable` modules a Bun CLI is built from: `effect/FileSystem`,
+`effect/Path`, `effect/cli`, `effect/http`, `effect/process` and `@effect/platform-bun`. They have no
+stable replacement, and a CLI on 4.1.2 got 110 reports without the list. With it, an unstable API from
+anywhere else still fails the gate: `effect/cli/Command` passed and `effect/sql/SqlClient` reported
+(measured). A project using another one adds it deliberately, or not at all.
 
 oxlint's `promise` rules decide whether `x.catch(…)` is a Promise call by looking at the receiver,
 and they treat a namespace import as one that might be a Promise. So `Effect.catch` and
-`Stream.catch` count as Promise chains (measured on oxlint 1.90.0). `prefer-await-to-then` reports
+`Stream.catch` count as Promise chains (measured on oxlint 1.91.0). `prefer-await-to-then` reports
 each one that isn't under a `yield` or an `await`, which is why it's off. `valid-params` is a
 correctness rule and stays on, but it rejects the data-first `Effect.catch(self, handler)` as a
 `Promise.catch()` with two arguments, so use the pipe form. Never rewrite a catch into something
@@ -118,6 +126,17 @@ The published base follows <https://www.effect.solutions/tsconfig> minus what a 
 cannot use, and `begone-slop`'s README lists what it keeps. It carries no plugin block. Everything
 local to this repo lives in `packages/tsconfig/base.json`, which today is `types: ["bun"]` and the
 language-service plugin entry.
+
+## Effect version
+
+Every Effect package takes its version from the one catalog in the root `package.json`, and members
+write `catalog:`, so a bump edits one place and the tree can't mix versions. The catalog pins EXACTLY.
+Effect 4 is stable, but that doesn't cover what most projects are built from: `cli/Command`,
+`http/HttpClient` and the rest of those modules are tagged `@stability unstable`, and an unstable
+module can break in a minor release.
+
+The `effect-best-practices` skill is written against one release and can lag the pinned one. Where
+it and `node_modules/effect/src` disagree, the source wins, and the disagreement is a bug in the skill.
 
 ## First
 

@@ -8,7 +8,15 @@
         "name": "@effect/language-service",
         "diagnostics": false,
         "brandedSchemaClasses": ["Class", "Error", "Opaque"],
-        "namespaceImportPackages": ["effect"]
+        "namespaceImportPackages": ["effect"],
+        "allowedUnstableApis": [
+          "@effect/platform-bun",
+          "effect/FileSystem",
+          "effect/Path",
+          "effect/cli",
+          "effect/http",
+          "effect/process"
+        ]
       }
     ]
   }

@@ -33,6 +33,8 @@ Then gate a change with all four:
 bun run typecheck && bun run lint && bun run test && bun run fmt:check
 ```
 
+Effect's version lives once, in the catalog in the root `package.json`: members write `catalog:`.
+
 Auto-fix with `bun run lint:fix && bun run fmt` — run `fmt` first, since formatting moves the line
 breaks the spacing rules judge.
 
