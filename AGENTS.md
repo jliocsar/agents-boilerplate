@@ -138,6 +138,11 @@ module can break in a minor release.
 The `effect-best-practices` skill is written against one release and can lag the pinned one. Where
 it and `node_modules/effect/src` disagree, the source wins, and the disagreement is a bug in the skill.
 
+A repo made from this one takes the skill through the `skills` CLI, never by copying it: `bunx --bun
+skills add jliocsar/agents-boilerplate -s effect-best-practices -a claude-code -y` replaces the
+directory whole and records the source and hash in `skills-lock.json` (measured). Hand-kept copies
+had drifted apart on 30 of 43 files.
+
 ## First
 
 :::warning
