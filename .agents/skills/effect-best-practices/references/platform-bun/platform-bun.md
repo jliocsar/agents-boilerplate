@@ -6,14 +6,14 @@ Platform service Tags live in CORE `effect`, NOT `@effect/platform`. Bun adapter
 
 - `FileSystem` → `effect/FileSystem`
 - `Path` → `effect/Path`
-- `Crypto` → `effect/Crypto`
+- Crypto → `effect/crypto/*` (`Digest`, `SecureRandom`, `Aead`, `Cipher`, `Kdf`, `KeyAgreement`, `KeyFormat`, `KeyWrap`, `Mac`, `Signature`, `WebCrypto`, `CryptoError`). `effect/Crypto` is gone since 4.1.0.
 - `Terminal` → `effect/Terminal`
 - `Stdio` → `effect/Stdio`
 - `ChildProcessSpawner` → `effect/process/ChildProcessSpawner`
 - HTTP → `effect/http/*` (`HttpServer`, `HttpServerResponse`, `HttpClient`, `FetchHttpClient`, ...)
 - Bun adapters → `@effect/platform-bun` (`BunRuntime`, `BunServices`, `BunHttpServer`, `BunFileSystem`, ...)
 
-- DON'T import `HttpServerResponse`/`Crypto`/`FileSystem` from `@effect/platform` — wrong package in v4.
+- DON'T import `HttpServerResponse`/`FileSystem` from `@effect/platform` — wrong package in v4.
 - DO yield the service Tag (`FileSystem.FileSystem`, `Path.Path`, ...) — same identity whether provided by Bun or Node layers, so libraries depend on the Tag, not the Bun layer.
 
 ## App entrypoint: `BunRuntime.runMain`
@@ -53,12 +53,11 @@ program.pipe(
 ## Platform services bundle: `BunServices.layer`
 
 ```ts
-export type BunServices = ChildProcessSpawner | Crypto | FileSystem | Path | Terminal | Stdio
+export type BunServices = ChildProcessSpawner | FileSystem | Path | Terminal | Stdio
 
 export const layer: Layer.Layer<BunServices> = BunChildProcessSpawner.layer.pipe(
   Layer.provideMerge(Layer.mergeAll(
     BunFileSystem.layer,
-    BunCrypto.layer,
     BunPath.layer,
     BunStdio.layer,
     BunTerminal.layer
@@ -67,7 +66,8 @@ export const layer: Layer.Layer<BunServices> = BunChildProcessSpawner.layer.pipe
 ```
 
 - DO provide `BunServices.layer` near the edge for apps/CLIs that touch FS, paths, stdio, terminal, subprocesses.
-- It does NOT include HttpServer, HttpClient, sockets, workers, or Redis — provide those separately.
+- It does NOT include crypto, HttpServer, HttpClient, sockets, workers, or Redis — provide those separately.
+- Crypto is provided by family, only where it's used: `BunCrypto.layer` carries them all, `BunCrypto.layerDigest` / `layerSecureRandom` / `layerMac` / `layerKdf` / `layerAead` / `layerCipher` / `layerSignature` / `layerKeyAgreement` / `layerKeyWrap` one each, and `Digest.layerWebCrypto` / `SecureRandom.layerWebCrypto` run off Web Crypto. `effect/testing/TestCrypto` is gone: use `Layer.mock`.
 - Most Bun core services re-export Node-shared impls:
   - `BunFileSystem.layer = NodeFileSystem.layer`
   - `BunPath.layer = NodePath.layer` (also `layerPosix`, `layerWin32`)

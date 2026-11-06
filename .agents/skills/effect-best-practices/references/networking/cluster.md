@@ -12,7 +12,8 @@ DO `Rpc.fork` inside read handlers to allow concurrency (default = sequential pe
 DON'T assume messages persist — they're volatile unless annotated `ClusterSchema.Persisted`.
 
 ```ts
-import { NodeClusterSocket, NodeRuntime } from "@effect/platform-node"
+import * as NodeClusterSocket from "@effect/platform-node/NodeClusterSocket"
+import * as NodeRuntime from "@effect/platform-node/NodeRuntime"
 import * as Effect from "effect/Effect"
 import * as Layer from "effect/Layer"
 import * as Ref from "effect/Ref"

@@ -93,10 +93,10 @@ const alice = yield* SqlResolver.request(User.insert.make({ name: "Alice", age: 
 
 ## Migrator
 
-Generic `Migrator.make`; drivers re-export as `PgMigrator.run/layer`, `SqliteMigrator.run/layer`. Loaders: `fromFileSystem(dir)`, `fromGlob(record)`, `fromBabelGlob(record)`, `fromRecord(record)`.
+Generic `Migrator.make`; drivers re-export as `PgMigrator.run/layer`, `SqliteMigrator.run/layer`. Loaders: `Migrator.fromGlob(record)`, `fromBabelGlob(record)`, `fromRecord(record)`. `fromFileSystem(dir)` moved to `effect/sql/MigratorFileSystem` and requires `FileSystem | Path`; driver migrators still re-export it, as used below.
 
 ```ts
-import { SqliteMigrator } from "@effect/sql-sqlite-node"
+import * as SqliteMigrator from "@effect/sql-sqlite-node/SqliteMigrator"
 import * as SqlClient from "effect/sql/SqlClient"
 
 // run form (provide SqlClient):
@@ -110,5 +110,5 @@ const MigratorLive = SqliteMigrator.layer({ loader: SqliteMigrator.fromRecord({ 
 ```
 
 - Migration ids are unique NUMBERS; file pattern `<id>_<name>.{js,ts,mjs,mts}`; default-export an `Effect` using the current `SqlClient`. Only ids > latest recorded run execute — editing old migrations won't re-run them.
-- Migrations run inside a transaction. On Postgres the migrations table is explicitly locked; other dialects rely on a table constraint to detect concurrent runners.
+- Migrations run inside a transaction, except on ClickHouse. On Postgres the migrations table is explicitly locked; other dialects rely on a table constraint to detect concurrent runners.
 - `MigrationError` (`Data.TaggedError`) kinds: `BadState | ImportError | Failed | Duplicates | Locked`.

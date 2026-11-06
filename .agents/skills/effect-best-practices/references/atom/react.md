@@ -2,12 +2,12 @@
 
 ```ts
 import {
-  RegistryProvider, RegistryContext,
   useAtom, useAtomValue, useAtomSet, useAtomMount, useAtomRefresh,
   useAtomSuspense, useAtomSubscribe, useAtomInitialValues,
   useAtomRef, useAtomRefProp, useAtomRefPropValue,
-  HydrationBoundary,
-} from "@effect/atom-react"
+} from "@effect/atom-react/Hooks"
+import { HydrationBoundary } from "@effect/atom-react/ReactHydration"
+import { RegistryContext, RegistryProvider } from "@effect/atom-react/RegistryContext"
 import * as ScopedAtom from "@effect/atom-react/ScopedAtom"
 import * as AsyncResult from "effect/reactivity/AsyncResult"
 ```

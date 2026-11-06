@@ -111,5 +111,5 @@ Command.run(cli, { version }).pipe(Effect.provide(BunServices.layer), BunRuntime
 
 - DO attach layers as `static readonly layer` on the service class.
 - DO keep layers focused (one service / small related group).
-- DO prefer `provide` over leaving requirements open so types stay small and deps are explicit.
+- DO leave a service's own `layer` open and wire once at the edge, one `provide` per named stage, so a test can build the real service over fakes of what it depends on.
 - DON'T use `Layer.merge` where you meant `provide` — `merge` leaves deps unsatisfied/exposed; `provide` hides+consumes, `provideMerge` keeps both.

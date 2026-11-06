@@ -38,9 +38,9 @@ Handler receives `(payload, { client, requestId, headers, rpc })` — the decode
 
 - Server: `RpcServer.layer(group)` + a protocol layer. Over HTTP: `RpcServer.layerHttp({ group, path, ... })` or `RpcServer.layerProtocolHttp(...)`. Also `layerProtocolWebsocket`, `layerProtocolSocketServer`, `layerProtocolStdio`, `layerProtocolWorkerRunner`.
 - Client: `RpcClient.make(group, { flatten? })` + a protocol: `RpcClient.layerProtocolHttp({ url, transformClient? })`, `layerProtocolSocket(...)`, `layerProtocolWorker(...)`. HTTP = one request per call; socket/worker keep a live channel for streaming/acks/interruption.
-- Serialization layer required by protocols: `RpcSerialization.layerJson` / `layerNdjson` (sockets/workers need framing) / `layerMsgPack` / `layerJsonRpc` / `layerNdJsonRpc`.
+- Serialization layer required by protocols: `RpcSerialization.layerJson` / `layerNdjson` (sockets/workers need framing) / `layerSchemaBinary` (binary, framed) / `layerJsonRpc` / `layerNdJsonRpc`. There is no `layerMsgPack`.
 - Testing: `RpcTest` for in-memory handler testing.
 - Middleware: `RpcMiddleware`.
 
 DO `RpcGroup.make(rpcA, rpcB, ...)` then `.toLayer({ TagA: handler, ... })`.
-DO pick serialization matching transport — `layerNdjson`/`layerMsgPack` for sockets/workers, `layerJson` for HTTP.
+DO pick serialization matching transport — `layerNdjson`/`layerSchemaBinary` for sockets/workers, `layerJson` for HTTP.

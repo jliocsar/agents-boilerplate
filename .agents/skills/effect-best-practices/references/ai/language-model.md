@@ -1,6 +1,6 @@
 # LanguageModel
 
-Core lives in `effect/ai` (part of the `effect` package, not a separate package). Verified exports of `effect/ai`: `AiError, AnthropicStructuredOutput, Chat, Decision, DecisionModel, EmbeddingModel, IdGenerator, LanguageModel, McpProtocol, McpSchema, McpServer, Model, OpenAiStructuredOutput, Prompt, Response, ResponseIdTracker, Telemetry, Tokenizer, Tool, Toolkit`.
+Core lives in `effect/ai` (part of the `effect` package, not a separate package). Verified exports of `effect/ai`: `AiError, AnthropicStructuredOutput, Chat, Decision, DecisionModel, EmbeddingModel, IdGenerator, LanguageModel, McpClient, McpClientError, McpProtocol, McpSchema, McpServer, McpTest, Model, OpenAiStructuredOutput, Prompt, Response, ResponseIdTracker, Telemetry, Tokenizer, Tool, Toolkit`.
 
 - DO call the module-level functions `LanguageModel.generateText/generateObject/streamText`; they require `LanguageModel.LanguageModel` in context.
 - Method forms also valid: `const model = yield* LanguageModel.LanguageModel; model.generateText(...)`.

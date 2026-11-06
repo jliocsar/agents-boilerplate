@@ -58,7 +58,7 @@ const UserId = Schema.Int.pipe(Schema.brand("UserId"))
 type UserId = typeof UserId.Type   // Int & Brand<"UserId">
 ```
 
-- `Schema.brand(id)` is type-only + metadata: it adds NO runtime check. Apply checks on the base FIRST, then brand. Chainable and stackable:
+- `Schema.brand(id)` is type-only: it adds NO runtime check and doesn't change the runtime AST, so schema representations and generated code omit it; reapply the brand on generated code. Apply checks on the base FIRST, then brand. Chainable and stackable:
 
 ```ts
 Schema.String.check(Schema.isMinLength(1)).pipe(Schema.brand("b"))
@@ -95,7 +95,7 @@ import * as SchemaGetter from "effect/SchemaGetter"
 import * as SchemaTransformation from "effect/SchemaTransformation"
 
 // prebuilt transformation
-const Up = Schema.String.decode(SchemaTransformation.toUpperCase())
+const Up = Schema.String.pipe(Schema.decode(SchemaTransformation.toUpperCase()))
 SchemaTransformation.numberFromString   // also trim, dateFromString, optionFromNullOr…
 
 // custom via decodeTo / encodeTo + getters
@@ -109,7 +109,7 @@ const NumberFromString = Schema.Number.pipe(
 
 - `Schema.decodeTo(to, {decode, encode})` / `Schema.encodeTo(to, {decode, encode})`: method-based transform to/from another schema.
 - `SchemaTransformation.transform({decode,encode})` and `SchemaTransformation.transformEffect({decode,encode})` (each returns an `Effect` failing with a `SchemaIssue.Issue`) live in the `SchemaTransformation` module.
-- `Schema.decode({decode,encode})`: identity-target transform on the same Type using `SchemaGetter.Getter`s.
+- `Schema.decode(transformation)`: pipeable identity-target transform on the same Type; it takes a `SchemaTransformation` or `{decode,encode}` of `SchemaGetter.Getter`s.
 - DON'T: `Schema.transform(...)` / `Schema.transformOrFail(...)` at top level (v3, removed).
 
 ## Decode / Encode variants
@@ -173,11 +173,11 @@ Schema.TaggedStruct(tag, fields)            // struct with a "_tag" literal
 Schema.TaggedUnion({ Tag: { fields } })     // discriminated union
 Schema.tag("X")                             // a "_tag" literal field with constructor default
 Schema.tagDefaultOmit("X")                  // like tag(), but STRIPPED from encoded output
-Schema.Opaque<Self>()(schema)               // nominal opaque type/class
+Schema.Opaque<Self>()(schema)               // nominal opaque type/class, over an object schema: a class can't extend a primitive's (TS2509)
 ```
 
 ```ts
-class UserId extends Schema.Opaque<UserId>()(Schema.String) {}
+class Person extends Schema.Opaque<Person>()(Schema.Struct({ name: Schema.String })) {}
 ```
 
 `Schema.TaggedUnion` returns a schema carrying `.cases`, `.guards`, `.isAnyOf`, `.match`:
@@ -255,7 +255,7 @@ Attach via the relevant API's annotations arg or annotation calls: `{ message: (
 
 ## Tagged errors
 
-Schema-based errors use `Schema.TaggedError` (4.0.5 has no `TaggedErrorClass`; pre-release v4 builds did). They mix in `Cause.YieldableError` so instances are `yield*`-able. Full error coverage lives in `../core/error-handling.md`.
+Schema-based errors use `Schema.TaggedError` (4.1.2 has no `TaggedErrorClass`; pre-release v4 builds did). They mix in `Cause.YieldableError` so instances are `yield*`-able. Full error coverage lives in `../core/error-handling.md`.
 
 ```ts
 export class UserNotFound extends Schema.TaggedError<UserNotFound>()(

@@ -14,7 +14,7 @@ DO decode bodies with `schemaBodyJson(Schema)`; wrap raw failures into a tagged 
 DO use `bodyJsonUnsafe` for already-validated sync payloads; `bodyJson` when encoding can fail.
 DO reach for `withRateLimiter` to pace outbound calls to a rate-limited API; it handles `429` + `Retry-After` for you, so don't hand-roll header parsing.
 DON'T forget `filterStatusOk` — without it 4xx/5xx are successful responses, not failures.
-DON'T provide `FetchHttpClient.layer` at call site if the service layer already provides it.
+DON'T provide `FetchHttpClient.layer` inside a service's layer or at a call site: the edge wires it, so a test can provide `HttpClient.make` instead.
 DON'T forget the `RateLimiter` layer + a store when using `withRateLimiter`, and account for the added `RateLimiterError` in the error channel.
 
 ```ts
@@ -24,6 +24,9 @@ import * as FetchHttpClient from "effect/http/FetchHttpClient"
 import * as HttpClient from "effect/http/HttpClient"
 import * as RateLimiter from "effect/persistence/RateLimiter"
 
+const RateLimiterLayer = RateLimiter.layer.pipe(Layer.provide(RateLimiter.layerStoreMemory))
+const PacedLayer = Layer.mergeAll(FetchHttpClient.layer, RateLimiterLayer)
+
 const paced = Effect.gen(function*() {
   const limiter = yield* RateLimiter.RateLimiter
   const client = (yield* HttpClient.HttpClient).pipe(
@@ -31,10 +34,7 @@ const paced = Effect.gen(function*() {
     HttpClient.filterStatusOk // error channel now: HttpClientError | RateLimiterError
   )
   return yield* client.get("https://api.example.com/data")
-}).pipe(Effect.provide(Layer.mergeAll(
-  FetchHttpClient.layer,
-  RateLimiter.layer.pipe(Layer.provide(RateLimiter.layerStoreMemory))
-)))
+}).pipe(Effect.provide(PacedLayer))
 ```
 
 ```ts

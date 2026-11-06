@@ -1,7 +1,7 @@
 # OpenTelemetry
 
 Two export paths:
-- Full OTel integration → `@effect/opentelemetry` (`NodeSdk`, `WebSdk`, `Tracer`, `Metrics`, `Logger`, `Resource`). Use when wiring an existing OTel SDK / instrumentations.
+- Full OTel integration → `@effect/opentelemetry` (`NodeSdk`, `WebSdk`, `OtelTracer`, `OtelMetrics`, `OtelLogger`, `Resource`). Use when wiring an existing OTel SDK / instrumentations.
 - Lightweight, no peer deps → `effect/observability` (`Otlp*`, `PrometheusMetrics`). Prefer for new projects.
 
 ## @effect/opentelemetry — NodeSdk / WebSdk
@@ -38,7 +38,7 @@ const TracingLive = NodeSdk.layer(Effect.sync(() => ({
 ### Production-shaped (OTLP HTTP)
 
 ```ts
-import { NodeSdk } from "@effect/opentelemetry"
+import * as NodeSdk from "@effect/opentelemetry/NodeSdk"
 import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-base"
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http"
 
@@ -50,7 +50,7 @@ const NodeSdkLayer = NodeSdk.layer(() => ({
 }))
 ```
 
-- Spans land as `Tracer.OtelSpan`; `Effect.currentSpan` resolves to it.
+- Spans land as `OtelTracer.OtelSpan`; `OtelTracer.currentOtelSpan` returns the underlying `Otel.Span`, failing with `NoSuchElementError` outside a span.
 - `NodeSdk.layerEmpty` / `layerTracerProvider` available for advanced cases.
 
 ### GOTCHA
@@ -84,8 +84,7 @@ const OtlpLoggingLayer = OtlpLogger.layer({
 })
 
 export const ObservabilityLayer = Layer.merge(OtlpTracingLayer, OtlpLoggingLayer).pipe(
-  Layer.provide(OtlpSerialization.layerJson),
-  Layer.provide(FetchHttpClient.layer)
+  Layer.provide(Layer.merge(OtlpSerialization.layerJson, FetchHttpClient.layer))
 )
 // provide LAST at the top: Main.pipe(Layer.provide(ObservabilityLayer))
 ```
